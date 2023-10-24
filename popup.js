@@ -26,12 +26,22 @@ function generateComparisonHTML(label, original, current) {
   return html;
 }
 
+function generateJsonldHTML(label, original, current) {
+  let html = `<h3>${label}</h3><div class="metadata">`;
+
+  if (!original) {
+    html += `<div class="original">original: not loaded</div>`;
+  } else if (original !== current) {
+    html += `<div class="original">original: ${original}</div>`;
+  }
+
+  html += `${current || "N/A"}</div>`;
+  return html;
+}
+
 document.addEventListener("DOMContentLoaded", function () {
   chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
     const activeTab = tabs[0];
-
-    window.innerWidth = 300;
-    window.innerHeight = 400;
 
     // 원본 HTML 가져오기
     chrome.runtime.sendMessage(
@@ -95,12 +105,20 @@ document.addEventListener("DOMContentLoaded", function () {
             //     } vs <b>Current Title:</b> ${metadata.title || "N/A"}<br>
             // `;
 
-            // // JSON-LD 데이터 표시
-            // const divJSONLD = document.getElementById("jsonld");
-            // divJSONLD.innerHTML =
-            //   "<b>JSON-LD Data:</b><pre>" +
-            //   JSON.stringify(jsonldData, null, 2) +
-            //   "</pre>";
+            // JSON-LD 데이터 표시
+            const divJSONLD = document.getElementById("jsonld");
+
+            let html = `<div><h3>JSON-LD Data:</h3>`;
+
+            if (divJSONLD) {
+              html += `<div class="original">${JSON.stringify(
+                jsonldData,
+                null,
+                2
+              )}</div></div>`;
+            }
+
+            divJSONLD.innerHTML = html;
           }
         );
       }
