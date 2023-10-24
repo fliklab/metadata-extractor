@@ -6,6 +6,8 @@ function extractMetadataFromDOM() {
     metaDescription: document.querySelector('meta[name="description"]')
       ?.content,
     metaRobots: document.querySelector('meta[name="robots"]')?.content,
+    metaStorebotGoogle: document.querySelector('meta[name="Storebot-Google"]')
+      ?.content,
     ogTitle: document.querySelector('meta[property="og:title"]')?.content,
     ogImage: document.querySelector('meta[property="og:image"]')?.content,
   };

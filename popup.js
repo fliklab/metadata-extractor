@@ -8,6 +8,8 @@ function extractMetadataFromRawHTML(html) {
     metaTitle: doc.querySelector("title")?.textContent,
     metaDescription: doc.querySelector('meta[name="description"]')?.content,
     metaRobots: doc.querySelector('meta[name="robots"]')?.content,
+    metaStorebotGoogle: doc.querySelector('meta[name="Storebot-Google"]')
+      ?.content,
     ogTitle: doc.querySelector('meta[property="og:title"]')?.content,
     ogImage: doc.querySelector('meta[property="og:image"]')?.content,
   };
@@ -90,6 +92,11 @@ document.addEventListener("DOMContentLoaded", function () {
                 "Meta Robots",
                 rawMetadata.metaRobots,
                 metadata.metaRobots
+              );
+              comparisonHTML += generateComparisonHTML(
+                "Meta Storebot-Google",
+                rawMetadata.metaStorebotGoogle,
+                metadata.metaStorebotGoogle
               );
               comparisonHTML += generateComparisonHTML(
                 "OG Title",
