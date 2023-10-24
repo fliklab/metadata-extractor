@@ -11,8 +11,26 @@ function extractMetadataFromDOM() {
   };
 }
 
+function extractJSONLD() {
+  const scripts = document.querySelectorAll(
+    'script[type="application/ld+json"]'
+  );
+  return Array.from(scripts)
+    .map((script) => {
+      try {
+        return JSON.parse(script.innerText.trim());
+      } catch (e) {
+        console.error("Failed to parse JSON-LD: ", e);
+        return null;
+      }
+    })
+    .filter((data) => data !== null);
+}
+
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.action === "getCurrentMetadata") {
-    sendResponse(extractMetadataFromDOM());
+    const metadata = extractMetadataFromDOM();
+    const jsonldData = extractJSONLD();
+    sendResponse({ metadata, jsonldData });
   }
 });

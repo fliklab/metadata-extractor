@@ -27,71 +27,80 @@ function generateComparisonHTML(label, original, current) {
 }
 
 document.addEventListener("DOMContentLoaded", function () {
-  function loadData() {
-    chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-      const activeTab = tabs[0];
+  chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+    const activeTab = tabs[0];
 
-      chrome.runtime.sendMessage(
-        { action: "getRawHTML", url: activeTab.url },
-        (response) => {
-          const rawMetadata = extractMetadataFromRawHTML(response.html);
+    // 원본 HTML 가져오기
+    chrome.runtime.sendMessage(
+      { action: "getRawHTML", url: activeTab.url },
+      (response) => {
+        const rawMetadata = extractMetadataFromRawHTML(response.html);
 
-          chrome.tabs.sendMessage(
-            activeTab.id,
-            { action: "getCurrentMetadata" },
-            (currentMetadata) => {
-              const divResults = document.getElementById("results");
-
-              if (!currentMetadata) {
-                divResults.innerHTML = `<h3>Metadata not found</h3>`;
-                return;
-              }
-
-              let comparisonHTML = "";
-              comparisonHTML += generateComparisonHTML(
-                "Title",
-                rawMetadata.title,
-                currentMetadata.title
-              );
-              comparisonHTML += generateComparisonHTML(
-                "Description",
-                rawMetadata.description,
-                currentMetadata.description
-              );
-              comparisonHTML += generateComparisonHTML(
-                "Meta Title",
-                rawMetadata.metaTitle,
-                currentMetadata.metaTitle
-              );
-              comparisonHTML += generateComparisonHTML(
-                "Meta Description",
-                rawMetadata.metaDescription,
-                currentMetadata.metaDescription
-              );
-              comparisonHTML += generateComparisonHTML(
-                "Meta Robots",
-                rawMetadata.metaRobots,
-                currentMetadata.metaRobots
-              );
-              comparisonHTML += generateComparisonHTML(
-                "OG Title",
-                rawMetadata.ogTitle,
-                currentMetadata.ogTitle
-              );
-              comparisonHTML += generateComparisonHTML(
-                "OG Image",
-                rawMetadata.ogImage,
-                currentMetadata.ogImage
-              );
-
-              divResults.innerHTML = comparisonHTML;
+        // 현재 DOM에서 메타데이터 가져오기
+        chrome.tabs.sendMessage(
+          activeTab.id,
+          { action: "getCurrentMetadata" },
+          ({ metadata, jsonldData }) => {
+            const divResults = document.getElementById("results");
+            if (!metadata) {
+              divResults.innerHTML = `<h3>Metadata not found</h3>`;
+              return;
             }
-          );
-        }
-      );
-    });
-  }
 
-  // 초기 데이터 로드
-  loadData();
+            let comparisonHTML = "";
+            comparisonHTML += generateComparisonHTML(
+              "Title",
+              rawMetadata.title,
+              metadata.title
+            );
+            comparisonHTML += generateComparisonHTML(
+              "Description",
+              rawMetadata.description,
+              metadata.description
+            );
+            comparisonHTML += generateComparisonHTML(
+              "Meta Title",
+              rawMetadata.metaTitle,
+              metadata.metaTitle
+            );
+            comparisonHTML += generateComparisonHTML(
+              "Meta Description",
+              rawMetadata.metaDescription,
+              metadata.metaDescription
+            );
+            comparisonHTML += generateComparisonHTML(
+              "Meta Robots",
+              rawMetadata.metaRobots,
+              metadata.metaRobots
+            );
+            comparisonHTML += generateComparisonHTML(
+              "OG Title",
+              rawMetadata.ogTitle,
+              metadata.ogTitle
+            );
+            comparisonHTML += generateComparisonHTML(
+              "OG Image",
+              rawMetadata.ogImage,
+              metadata.ogImage
+            );
+
+            // 두 메타데이터 비교하고 팝업에 표시
+            divResults.innerHTML = comparisonHTML;
+            // `
+            //     <b>Original Title:</b> ${
+            //       rawMetadata.title || "N/A"
+            //     } vs <b>Current Title:</b> ${metadata.title || "N/A"}<br>
+            // `;
+
+            // // JSON-LD 데이터 표시
+            // const divJSONLD = document.getElementById("jsonld");
+            // divJSONLD.innerHTML =
+            //   "<b>JSON-LD Data:</b><pre>" +
+            //   JSON.stringify(jsonldData, null, 2) +
+            //   "</pre>";
+          }
+        );
+      }
+    );
+  });
 });
