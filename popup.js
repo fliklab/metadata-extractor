@@ -30,6 +30,9 @@ document.addEventListener("DOMContentLoaded", function () {
   chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
     const activeTab = tabs[0];
 
+    window.innerWidth = 300;
+    window.innerHeight = 400;
+
     // 원본 HTML 가져오기
     chrome.runtime.sendMessage(
       { action: "getRawHTML", url: activeTab.url },
@@ -102,5 +105,12 @@ document.addEventListener("DOMContentLoaded", function () {
         );
       }
     );
+  });
+  const refreshButton = document.getElementById("refreshPage");
+  refreshButton.addEventListener("click", function () {
+    chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+      const activeTab = tabs[0];
+      chrome.tabs.reload(activeTab.id);
+    });
   });
 });
