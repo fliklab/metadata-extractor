@@ -53,82 +53,81 @@ document.addEventListener("DOMContentLoaded", function () {
         chrome.tabs.sendMessage(
           activeTab.id,
           { action: "getCurrentMetadata" },
-          ({ metadata, jsonldData }) => {
+          (data) => {
+            const metadata = data?.metadata;
+            const jsonldData = data?.jsonldData;
             const divResults = document.getElementById("results");
-            if (!metadata) {
+
+            if (!metadata && !jsonldData) {
               divResults.innerHTML = `<h3>Metadata not found</h3>`;
               return;
             }
 
-            let comparisonHTML = "";
-            comparisonHTML += generateComparisonHTML(
-              "Title",
-              rawMetadata.title,
-              metadata.title
-            );
-            comparisonHTML += generateComparisonHTML(
-              "Description",
-              rawMetadata.description,
-              metadata.description
-            );
-            comparisonHTML += generateComparisonHTML(
-              "Meta Title",
-              rawMetadata.metaTitle,
-              metadata.metaTitle
-            );
-            comparisonHTML += generateComparisonHTML(
-              "Meta Description",
-              rawMetadata.metaDescription,
-              metadata.metaDescription
-            );
-            comparisonHTML += generateComparisonHTML(
-              "Meta Robots",
-              rawMetadata.metaRobots,
-              metadata.metaRobots
-            );
-            comparisonHTML += generateComparisonHTML(
-              "OG Title",
-              rawMetadata.ogTitle,
-              metadata.ogTitle
-            );
-            comparisonHTML += generateComparisonHTML(
-              "OG Image",
-              rawMetadata.ogImage,
-              metadata.ogImage
-            );
+            if (metadata) {
+              let comparisonHTML = "";
 
-            // 두 메타데이터 비교하고 팝업에 표시
-            divResults.innerHTML = comparisonHTML;
-            // `
-            //     <b>Original Title:</b> ${
-            //       rawMetadata.title || "N/A"
-            //     } vs <b>Current Title:</b> ${metadata.title || "N/A"}<br>
-            // `;
+              comparisonHTML += generateComparisonHTML(
+                "Title",
+                rawMetadata.title,
+                metadata.title
+              );
+              comparisonHTML += generateComparisonHTML(
+                "Description",
+                rawMetadata.description,
+                metadata.description
+              );
+              comparisonHTML += generateComparisonHTML(
+                "Meta Title",
+                rawMetadata.metaTitle,
+                metadata.metaTitle
+              );
+              comparisonHTML += generateComparisonHTML(
+                "Meta Description",
+                rawMetadata.metaDescription,
+                metadata.metaDescription
+              );
+              comparisonHTML += generateComparisonHTML(
+                "Meta Robots",
+                rawMetadata.metaRobots,
+                metadata.metaRobots
+              );
+              comparisonHTML += generateComparisonHTML(
+                "OG Title",
+                rawMetadata.ogTitle,
+                metadata.ogTitle
+              );
+              comparisonHTML += generateComparisonHTML(
+                "OG Image",
+                rawMetadata.ogImage,
+                metadata.ogImage
+              );
+
+              // 두 메타데이터 비교하고 팝업에 표시
+              divResults.innerHTML = comparisonHTML;
+            }
 
             // JSON-LD 데이터 표시
             const divJSONLD = document.getElementById("jsonld");
-
-            let html = `<div><h3>JSON-LD Data:</h3>`;
-
             if (divJSONLD) {
-              html += `<div class="original">${JSON.stringify(
+              let html = `<div><h3>JSON-LD Data:</h3>`;
+              html += `<div class="metadata" >${JSON.stringify(
                 jsonldData,
                 null,
                 2
               )}</div></div>`;
+              divJSONLD.innerHTML = html;
             }
-
-            divJSONLD.innerHTML = html;
           }
         );
       }
     );
   });
-  const refreshButton = document.getElementById("refreshPage");
-  refreshButton.addEventListener("click", function () {
-    chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-      const activeTab = tabs[0];
-      chrome.tabs.reload(activeTab.id);
-    });
+});
+
+const refreshButton = document.getElementById("refreshPage");
+refreshButton.addEventListener("click", function () {
+  chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+    const activeTab = tabs[0];
+    chrome.tabs.reload(activeTab.id);
   });
 });
