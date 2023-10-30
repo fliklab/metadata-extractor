@@ -66,7 +66,7 @@ document.addEventListener("DOMContentLoaded", function () {
             }
 
             if (metadata) {
-              let comparisonHTML = "";
+              let comparisonHTML = activeTab.url;
 
               comparisonHTML += generateComparisonHTML(
                 "Title",
