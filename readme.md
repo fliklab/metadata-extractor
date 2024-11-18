@@ -2,7 +2,7 @@
 
 ### 확장 프로그램
 
-[크롬 웹스토어](https://chromewebstore.google.com/detail/metadata-extractor/pdikiboojnhoacoknfdpndeddocnbmop, "metadata-extractor")에서 설치하여 사용할 수 있습니다.
+[크롬 웹스토어](https://chromewebstore.google.com/detail/metadata-extractor/pdikiboojnhoacoknfdpndeddocnbmop "metadata-extractor")에서 설치하여 사용할 수 있습니다.
 
 ### 직접 설치 
 
