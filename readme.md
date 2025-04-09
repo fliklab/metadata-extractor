@@ -8,7 +8,7 @@
 
 ### 간단한 사용방법 안내
 
-![image](https://github.com/user-attachments/assets/6ef1f077-2411-409f-9450-b79e888db326)
+<img alt="예시 이미지" src="https://github.com/user-attachments/assets/6ef1f077-2411-409f-9450-b79e888db326" width=200px/>
 
 익스텐션이 켜져있는 상태로 사이트에 접속하면 메타 태그가 표시됩니다.
 
