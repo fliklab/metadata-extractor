@@ -1,8 +1,20 @@
-## Meta Data Extractor: 간단한 사용방법 안내
+## Meta Data Extractor
 
-### 확장 프로그램
 
-[크롬 웹스토어](https://chromewebstore.google.com/detail/metadata-extractor/pdikiboojnhoacoknfdpndeddocnbmop "metadata-extractor")에서 설치하여 사용할 수 있습니다.
+### 프로그램 설치
+
+이 프로그램은 크롬에서 사용가능한 확장 프로그램으로 [크롬 웹스토어](https://chromewebstore.google.com/detail/metadata-extractor/pdikiboojnhoacoknfdpndeddocnbmop "metadata-extractor")에서 설치하여 사용할 수 있습니다.
+
+
+### 간단한 사용방법 안내
+
+![image](https://github.com/user-attachments/assets/6ef1f077-2411-409f-9450-b79e888db326)
+
+익스텐션이 켜져있는 상태로 사이트에 접속하면 메타 태그가 표시됩니다.
+
+이 프로그램의 가장 큰 특징은 페이지 로딩 이후 값이 바뀌었다면 바뀌기 전 값이 주황색으로 표시됩니다.
+검색 봇이 자바스크립트를 실행하지 않는다면, 주황색 값을 참고하게 되므로 생각한대로 SEO가 안될 가능성이 큽니다.
+이 프로그램은 자바스크립트가 실행되기 전후의 메타태그를 비교하여 정확한 SEO를 할 수 있도록 도와줍니다.
 
 ### 직접 설치 
 
