@@ -31,10 +31,34 @@ function extractJSONLD() {
     .filter((data) => data !== null);
 }
 
+// Wait briefly for canonical to be injected by SPA head managers (e.g., Helmet)
+function waitForCanonical(maxWaitMs = 1500, intervalMs = 100) {
+  const getCanonical = () =>
+    document.querySelector('link[rel="canonical"]')?.href || null;
+
+  return new Promise((resolve) => {
+    const start = Date.now();
+    const check = () => {
+      const href = getCanonical();
+      if (href) return resolve(href);
+      if (Date.now() - start >= maxWaitMs) return resolve(null);
+      setTimeout(check, intervalMs);
+    };
+    check();
+  });
+}
+
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.action === "getCurrentMetadata") {
-    const metadata = extractMetadataFromDOM();
-    const jsonldData = extractJSONLD();
-    sendResponse({ metadata, jsonldData });
+    (async () => {
+      const metadata = extractMetadataFromDOM();
+      if (!metadata.canonicalUrl) {
+        metadata.canonicalUrl = await waitForCanonical();
+      }
+      const jsonldData = extractJSONLD();
+      sendResponse({ metadata, jsonldData });
+    })();
+    // Keep the message channel open for the async response
+    return true;
   }
 });
