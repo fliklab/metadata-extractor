@@ -15,6 +15,7 @@ function extractMetadataFromRawHTML(html) {
     ogTitle: doc.querySelector('meta[property="og:title"]')?.content,
     ogImage: doc.querySelector('meta[property="og:image"]')?.content,
     ogUrl: doc.querySelector('meta[property="og:url"]')?.content,
+    canonicalUrl: doc.querySelector('link[rel="canonical"]')?.href,
   };
 }
 
@@ -70,6 +71,11 @@ function toMetaTag(propertyOrName, content, isProperty = true) {
 function toTitleTag(content) {
   if (content == null) return null;
   return `&lt;title&gt;${escapeHtml(content)}&lt;/title&gt;`;
+}
+
+function toLinkTag(rel, href) {
+  if (href == null) return null;
+  return `&lt;link rel="${escapeHtml(rel)}" href="${escapeHtml(href)}" /&gt;`;
 }
 
 function escapeHtml(str) {
@@ -160,6 +166,16 @@ document.addEventListener("DOMContentLoaded", function () {
                   state: getState(
                     metadata.metaDescription,
                     rawMetadata.metaDescription
+                  ),
+                },
+                {
+                  key: "canonical url",
+                  value: metadata.canonicalUrl,
+                  original: rawMetadata.canonicalUrl,
+                  code: toLinkTag("canonical", rawMetadata.canonicalUrl),
+                  state: getState(
+                    metadata.canonicalUrl,
+                    rawMetadata.canonicalUrl
                   ),
                 },
               ];
