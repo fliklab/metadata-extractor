@@ -5,6 +5,7 @@
   "description": "Extracts metadata from a webpage",
   "permissions": ["activeTab", "scripting"],
   "background": {
+    "type": "module",
     "service_worker": "background.js"
   },
   "action": {

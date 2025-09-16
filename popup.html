@@ -1,36 +1,221 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <title>Metadata Debugger</title>
+    <title>Meta Checker</title>
     <style>
+      :root {
+        --bg: #0b0c0f;
+        --card: #12141a;
+        --text: #e6e8ef;
+        --muted: #9aa3b2;
+        --accent: #4f46e5;
+        --ok: #10b981;
+        --warn: #f59e0b;
+        --danger: #ef4444;
+        --info: #60a5fa;
+        --border: #1f2430;
+        --code: #0a0b10;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      html,
       body {
-        font-family: Arial, sans-serif;
-        margin: 10px;
-        width: 400px; /* 원하는 너비로 설정 */
-        height: 1000px; /* 원하는 높이로 설정 */
+        height: 100%;
       }
-      h3 {
-        margin-top: 10px;
-        margin-bottom: 4px;
+      body {
+        margin: 0;
+        width: 420px;
+        height: 640px;
+        background: var(--bg);
+        color: var(--text);
+        font: 14px/1.5 -apple-system, BlinkMacSystemFont, "Inter", Segoe UI,
+          Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
+        letter-spacing: -0.01em;
       }
-      .metadata {
-        margin-bottom: 10px;
-        padding: 5px;
-        border: 1px solid #ddd;
-        border-radius: 4px;
+      .wrap {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        padding: 14px;
       }
-      .original {
-        color: orange;
+      .header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
       }
-      button.refresh {
-        margin-bottom: 10px;
+      .title {
+        font-size: 14px;
+        font-weight: 600;
+        color: var(--text);
+        opacity: 0.9;
+      }
+      .actions {
+        display: flex;
+        gap: 8px;
+      }
+      button.icon {
+        background: transparent;
+        color: var(--muted);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 6px 10px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+      }
+      button.icon:hover {
+        color: var(--text);
+        border-color: #2b3242;
+      }
+      .section {
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        overflow: hidden;
+      }
+      .section + .section {
+        margin-top: 6px;
+      }
+      .section-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 10px 12px;
+        border-bottom: 1px solid var(--border);
+      }
+      .section-title {
+        font-weight: 600;
+        color: var(--muted);
+        font-size: 12px;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+      }
+      .list {
+        padding: 6px;
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 6px;
+      }
+      .row {
+        display: grid;
+        grid-template-columns: 130px 1fr auto;
+        align-items: start;
+        gap: 8px;
+        padding: 8px;
+        border-radius: 10px;
+        border: 1px solid transparent;
+      }
+      .row:hover {
+        background: rgba(255, 255, 255, 0.02);
+        border-color: var(--border);
+      }
+      .row.state-changed {
+        background: rgba(245, 158, 11, 0.06);
+        border-color: rgba(245, 158, 11, 0.3);
+      }
+      .row.state-removed {
+        background: rgba(239, 68, 68, 0.06);
+        border-color: rgba(239, 68, 68, 0.3);
+      }
+      .row.state-new {
+        background: rgba(79, 70, 229, 0.06);
+        border-color: rgba(79, 70, 229, 0.3);
+      }
+      .key {
+        color: var(--muted);
+        font-weight: 600;
+        font-size: 12px;
+      }
+      .value {
+        color: var(--text);
+        word-break: break-word;
+        overflow-wrap: anywhere;
+      }
+      .chip {
+        font-size: 11px;
+        color: var(--ok);
+        border: 1px solid rgba(16, 185, 129, 0.25);
+        background: rgba(16, 185, 129, 0.08);
+        padding: 2px 6px;
+        border-radius: 999px;
+        display: inline-flex;
+        align-items: center;
+        white-space: nowrap;
+        line-height: 1.25;
+        letter-spacing: 0;
+        font-family: -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo",
+          "Noto Sans KR", "Malgun Gothic", "Segoe UI", Roboto, Helvetica, Arial,
+          sans-serif;
+      }
+      .chip.warn {
+        color: var(--warn);
+        border-color: rgba(245, 158, 11, 0.35);
+        background: rgba(245, 158, 11, 0.08);
+      }
+      .chip.info {
+        color: var(--accent);
+        border-color: rgba(79, 70, 229, 0.35);
+        background: rgba(79, 70, 229, 0.08);
+      }
+      .chip.danger {
+        color: var(--danger);
+        border-color: rgba(239, 68, 68, 0.35);
+        background: rgba(239, 68, 68, 0.08);
+      }
+      .code-btn {
+        background: transparent;
+        border: 1px solid var(--border);
+        color: var(--muted);
+        border-radius: 8px;
+        padding: 2px 6px;
+        cursor: pointer;
+      }
+      .code-btn:hover {
+        color: var(--text);
+        border-color: #2b3242;
+      }
+      .tools {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        justify-content: flex-end;
+      }
+      .code {
+        display: none;
+        grid-column: 1 / -1;
+        background: var(--code);
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        padding: 10px;
+        color: #cbd5e1;
+        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+          "Liberation Mono", "Courier New", monospace;
+        font-size: 12px;
+        overflow: auto;
+        white-space: pre-wrap;
+      }
+      .jsonld {
+        max-height: 160px;
+      }
+      .url {
+        color: var(--muted);
+        font-size: 12px;
+        padding: 6px 12px;
       }
     </style>
   </head>
   <body>
-    <button id="refreshPage">Refresh</button>
-    <div id="results"></div>
-    <div id="jsonld" style="white-space: pre-wrap"></div>
-    <script src="popup.js"></script>
+    <div class="wrap">
+      <div class="header">
+        <div class="title">Meta Checker</div>
+        <div class="actions">
+          <button id="refreshPage" class="icon">Reload</button>
+        </div>
+      </div>
+      <div id="activeUrl" class="url"></div>
+      <div id="groups"></div>
+      <div id="jsonld" class="section"></div>
+    </div>
+    <script src="popup.js" type="module"></script>
   </body>
 </html>

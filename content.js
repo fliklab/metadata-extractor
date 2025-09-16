@@ -10,6 +10,8 @@ function extractMetadataFromDOM() {
       ?.content,
     ogTitle: document.querySelector('meta[property="og:title"]')?.content,
     ogImage: document.querySelector('meta[property="og:image"]')?.content,
+    ogUrl: document.querySelector('meta[property="og:url"]')?.content,
+    canonicalUrl: document.querySelector('link[rel="canonical"]')?.href,
   };
 }
 
