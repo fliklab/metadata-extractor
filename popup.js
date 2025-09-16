@@ -15,7 +15,8 @@ function extractMetadataFromRawHTML(html) {
     ogTitle: doc.querySelector('meta[property="og:title"]')?.content,
     ogImage: doc.querySelector('meta[property="og:image"]')?.content,
     ogUrl: doc.querySelector('meta[property="og:url"]')?.content,
-    canonicalUrl: doc.querySelector('link[rel="canonical"]')?.href,
+    // token-based, case-insensitive rel matching
+    canonicalUrl: doc.querySelector('link[rel~="canonical" i]')?.href,
   };
 }
 
@@ -275,7 +276,9 @@ document.addEventListener("DOMContentLoaded", function () {
                 </div>
                 <div class="list">
                   <div class="row">
-                    <pre id="${jsonId}" class="code jsonld">${pretty}</pre>
+                    <pre id="${jsonId}" class="code jsonld" style="display: ${
+                      jsonldData && jsonldData.length ? "block" : "none"
+                    }">${pretty}</pre>
                   </div>
                 </div>
               `;
