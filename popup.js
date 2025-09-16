@@ -277,8 +277,8 @@ document.addEventListener("DOMContentLoaded", function () {
                 <div class="list">
                   <div class="row">
                     <pre id="${jsonId}" class="code jsonld" style="display: ${
-                      jsonldData && jsonldData.length ? "block" : "none"
-                    }">${pretty}</pre>
+                jsonldData && jsonldData.length ? "block" : "none"
+              }">${pretty}</pre>
                   </div>
                 </div>
               `;
