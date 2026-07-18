@@ -949,8 +949,5 @@ initializeDisplaySettingsModal();
 const refreshButton = document.getElementById("refreshPage");
 if (refreshButton) refreshButton.textContent = t("reload");
 refreshButton?.addEventListener("click", () => {
-  chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-    const activeTab = tabs[0];
-    if (activeTab) chrome.tabs.reload(activeTab.id);
-  });
+  window.location.reload();
 });
