@@ -1,92 +1,13 @@
-import getGhip from "./ui/chip.js";
+import buildRow from "./ui/row.js";
+import extractMetadataFromRawHTML from "./core/extractMetaDataFromRawHTML.js";
+import {
+  toMetaTag,
+  toTitleTag,
+  toLinkTag,
+  escapeHtml,
+} from "./core/formatToTag.js";
 
-function extractMetadataFromRawHTML(html) {
-  const parser = new DOMParser();
-  const doc = parser.parseFromString(html, "text/html");
-
-  return {
-    title: doc.title,
-    description: doc.querySelector('meta[name="description"]')?.content,
-    metaTitle: doc.querySelector("title")?.textContent,
-    metaDescription: doc.querySelector('meta[name="description"]')?.content,
-    metaRobots: doc.querySelector('meta[name="robots"]')?.content,
-    metaStorebotGoogle: doc.querySelector('meta[name="Storebot-Google"]')
-      ?.content,
-    ogTitle: doc.querySelector('meta[property="og:title"]')?.content,
-    ogImage: doc.querySelector('meta[property="og:image"]')?.content,
-    ogUrl: doc.querySelector('meta[property="og:url"]')?.content,
-    // token-based, case-insensitive rel matching
-    canonicalUrl: doc.querySelector('link[rel~="canonical" i]')?.href,
-  };
-}
-
-function buildRow({ key, value, original, code, state, hint }) {
-  const safeValue = value ?? "N/A";
-  const safeOriginal = original ?? "N/A";
-  const hasCode = Boolean(code);
-  const codeId = `code-${key
-    .replace(/[^a-z0-9]/gi, "-")
-    .toLowerCase()}-${Math.random().toString(36).slice(2, 7)}`;
-
-  const stateClass =
-    state === "changed"
-      ? "state-changed"
-      : state === "removed"
-      ? "state-removed"
-      : state === "new"
-      ? "state-new"
-      : "";
-  const chip = getGhip(state, hint);
-  const displayValue =
-    state === "changed"
-      ? `${escapeHtml(
-          safeValue
-        )}<div class="before" style="color: var(--muted); font-size: 12px;">Before: ${escapeHtml(
-          safeOriginal
-        )}</div>`
-      : escapeHtml(safeValue);
-
-  return `
-    <div class="row ${stateClass}">
-      <div class="key">${key}</div>
-      <div class="value">${displayValue} ${chip}</div>
-      <div class="tools">${
-        hasCode
-          ? `<button class="code-btn" data-target="${codeId}">&lt;/&gt;</button>`
-          : ""
-      }</div>
-      ${hasCode ? `<pre id="${codeId}" class="code">${code}</pre>` : ""}
-    </div>
-  `;
-}
-
-function toMetaTag(propertyOrName, content, isProperty = true) {
-  if (content == null) return null;
-  return isProperty
-    ? `&lt;meta property="${propertyOrName}" content="${escapeHtml(
-        content
-      )}"&gt;`
-    : `&lt;meta name="${propertyOrName}" content="${escapeHtml(content)}"&gt;`;
-}
-
-function toTitleTag(content) {
-  if (content == null) return null;
-  return `&lt;title&gt;${escapeHtml(content)}&lt;/title&gt;`;
-}
-
-function toLinkTag(rel, href) {
-  if (href == null) return null;
-  return `&lt;link rel="${escapeHtml(rel)}" href="${escapeHtml(href)}" /&gt;`;
-}
-
-function escapeHtml(str) {
-  return String(str)
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#039;");
-}
+import { getSectionList } from "./ui/section.js";
 
 document.addEventListener("DOMContentLoaded", function () {
   chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
@@ -111,21 +32,13 @@ document.addEventListener("DOMContentLoaded", function () {
             if (activeUrl) activeUrl.textContent = activeTab.url || "";
 
             if (!metadata && !jsonldData) {
-              groups.innerHTML = `<div class="section"><div class="section-header"><div class="section-title">No Metadata</div></div><div class="list"></div></div>`;
+              groups.innerHTML = `${getSectionList("No Metadata", [])}`;
               return;
             }
 
             if (metadata) {
-              const getState = (current, original) => {
-                const cur = current ?? null;
-                const ori = original ?? null;
-                if (cur === null && ori === null) return null;
-                if (cur === null && ori !== null) return "removed";
-                if (cur !== null && ori === null) return "new";
-                return cur === ori ? "same" : "changed";
-              };
-
               const rawTitle = rawMetadata.metaTitle || rawMetadata.title;
+
               const basicList = [
                 {
                   key: "title",
