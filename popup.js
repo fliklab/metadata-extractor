@@ -186,6 +186,58 @@ function bindSectionToggles(container) {
   });
 }
 
+function showChipTooltip(target) {
+  const tooltip = document.getElementById("chipTooltip");
+  const description = target.dataset.tooltip;
+  if (!tooltip || !description) return;
+
+  tooltip.textContent = description;
+  tooltip.classList.add("visible");
+
+  const targetRect = target.getBoundingClientRect();
+  const tooltipRect = tooltip.getBoundingClientRect();
+  const gap = 8;
+  const viewportPadding = 8;
+  const maxLeft = window.innerWidth - tooltipRect.width - viewportPadding;
+  const left = Math.min(
+    Math.max(viewportPadding, targetRect.right - tooltipRect.width),
+    maxLeft
+  );
+
+  let top = targetRect.top - tooltipRect.height - gap;
+  if (top < viewportPadding) top = targetRect.bottom + gap;
+  top = Math.min(
+    Math.max(viewportPadding, top),
+    window.innerHeight - tooltipRect.height - viewportPadding
+  );
+
+  tooltip.style.left = `${left}px`;
+  tooltip.style.top = `${top}px`;
+}
+
+function hideChipTooltip() {
+  document.getElementById("chipTooltip")?.classList.remove("visible");
+}
+
+document.addEventListener("mouseover", (event) => {
+  const target = event.target.closest?.(".chip-help");
+  if (target) showChipTooltip(target);
+});
+
+document.addEventListener("mouseout", (event) => {
+  const target = event.target.closest?.(".chip-help");
+  if (target && !target.contains(event.relatedTarget)) hideChipTooltip();
+});
+
+document.addEventListener("focusin", (event) => {
+  const target = event.target.closest?.(".chip-help");
+  if (target) showChipTooltip(target);
+});
+
+document.addEventListener("focusout", (event) => {
+  if (event.target.closest?.(".chip-help")) hideChipTooltip();
+});
+
 function renderJsonLd({ jsonldData, jsonldErrors, jsonldTotal }) {
   const container = document.getElementById("jsonld");
   if (!container) return;

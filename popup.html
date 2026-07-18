@@ -228,14 +228,12 @@
         cursor: help;
         opacity: 0.8;
       }
-      .chip-help:hover::after,
-      .chip-help:focus-visible::after {
-        content: attr(data-tooltip);
-        position: absolute;
-        z-index: 20;
-        right: 0;
-        top: calc(100% + 7px);
+      .chip-tooltip {
+        position: fixed;
+        z-index: 100;
+        display: none;
         width: 230px;
+        max-width: calc(100vw - 16px);
         padding: 8px 10px;
         border: 1px solid var(--border);
         border-radius: 8px;
@@ -246,6 +244,10 @@
         line-height: 1.4;
         white-space: normal;
         box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+        pointer-events: none;
+      }
+      .chip-tooltip.visible {
+        display: block;
       }
       .code-btn {
         background: transparent;
@@ -304,6 +306,7 @@
       <div id="jsonld" class="section"></div>
       <div id="documentInfo"></div>
     </div>
+    <div id="chipTooltip" class="chip-tooltip" role="tooltip"></div>
     <script src="popup.js" type="module"></script>
   </body>
 </html>
