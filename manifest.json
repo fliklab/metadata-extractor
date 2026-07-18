@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "Meta Checker",
   "version": "1.1.0",
-  "description": "Extracts metadata from a webpage",
+  "description": "Inspect webpage metadata and compare the live DOM with the original HTML response. Spot new, changed, or removed values instantly.",
   "permissions": ["activeTab"],
   "background": {
     "type": "module",
