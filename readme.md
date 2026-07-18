@@ -1,9 +1,9 @@
-## Meta Data Extractor
+## Meta Checker
 
 
 ### 프로그램 설치
 
-이 프로그램은 크롬에서 사용가능한 확장 프로그램으로 [크롬 웹스토어](https://chromewebstore.google.com/detail/metadata-extractor/pdikiboojnhoacoknfdpndeddocnbmop "metadata-extractor")에서 설치하여 사용할 수 있습니다.
+이 프로그램은 크롬에서 사용가능한 확장 프로그램으로 [크롬 웹스토어](https://chromewebstore.google.com/detail/metadata-extractor/pdikiboojnhoacoknfdpndeddocnbmop "Meta Checker")에서 설치하여 사용할 수 있습니다.
 
 
 ### 간단한 사용방법 안내
