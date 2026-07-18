@@ -12,13 +12,14 @@ import { getStateHelp } from "./ui/chip.js";
 
 const LANGUAGE_STORAGE_KEY = "meta-checker-language";
 const DISPLAY_STORAGE_KEY = "meta-checker-visible-items";
-const locale = localStorage.getItem(LANGUAGE_STORAGE_KEY) === "ko" ? "ko" : "en";
-document.documentElement.lang = locale;
+const supportedLocales = new Set(["en", "ko", "ja", "es", "pt_BR"]);
+const storedLocale = localStorage.getItem(LANGUAGE_STORAGE_KEY);
+const locale = supportedLocales.has(storedLocale) ? storedLocale : "en";
+document.documentElement.lang = locale === "pt_BR" ? "pt-BR" : locale;
 
 const messages = {
   en: {
     reload: "Reload",
-    switchLanguage: "한국어",
     unableToInspect: "Unable to inspect tab",
     noMetadata: "No Metadata",
     basic: "Basic",
@@ -73,7 +74,6 @@ const messages = {
   },
   ko: {
     reload: "새로고침",
-    switchLanguage: "English",
     unableToInspect: "탭을 확인할 수 없음",
     noMetadata: "메타데이터 없음",
     basic: "기본 정보",
@@ -125,6 +125,168 @@ const messages = {
       "Chrome 보호 페이지는 확장 프로그램에서 검사할 수 없습니다. 일반 웹사이트를 열고 다시 시도하세요.",
     inspectionFailedMessage: "이 페이지에서 메타데이터를 읽지 못했습니다.",
     noJsonLd: "JSON-LD 없음",
+  },
+  ja: {
+    reload: "再読み込み",
+    unableToInspect: "タブを検査できません",
+    noMetadata: "メタデータなし",
+    basic: "基本情報",
+    document: "ドキュメント情報",
+    languages: "言語情報",
+    openGraph: "Open Graph",
+    etc: "その他",
+    httpResponse: "HTTP レスポンス",
+    jsonLdSummary: "JSON-LD サマリー",
+    title: "タイトル",
+    metaTitle: "メタタイトル",
+    metaDescription: "メタディスクリプション",
+    canonicalUrl: "正規 URL",
+    charset: "文字エンコーディング",
+    viewport: "ビューポート",
+    favicon: "ファビコン",
+    themeColor: "テーマカラー",
+    htmlLang: "ドキュメント言語",
+    hreflang: "代替言語",
+    blocks: "ブロック数",
+    valid: "有効",
+    invalid: "エラー",
+    types: "@type",
+    parseErrors: "解析エラー",
+    raw: "生データ",
+    noValidJsonLd: "有効な JSON-LD なし",
+    status: "ステータス",
+    finalUrl: "最終 URL",
+    redirected: "リダイレクト",
+    contentType: "コンテンツタイプ",
+    xRobotsTag: "X-Robots-Tag",
+    error: "エラー",
+    yes: "はい",
+    no: "いいえ",
+    stateHelp: "状態ヘルプ",
+    stateHelpTitle: "メタデータ状態ガイド",
+    stateHelpIntro:
+      "現在の DOM のメタデータを元の HTML レスポンスと比較した結果です。",
+    close: "閉じる",
+    displaySettings: "表示設定",
+    displaySettingsTitle: "表示するメタデータを選択",
+    displaySettingsIntro:
+      "セクション全体または表示する個別項目を選択してください。",
+    save: "適用",
+    resetDefaults: "初期設定に戻す",
+    inspectionStatus: "検査ステータス",
+    message: "メッセージ",
+    protectedPageMessage:
+      "Chrome の保護ページは拡張機能で検査できません。通常のウェブサイトを開いて再試行してください。",
+    inspectionFailedMessage: "このページのメタデータを読み取れませんでした。",
+    noJsonLd: "JSON-LD なし",
+  },
+  es: {
+    reload: "Actualizar",
+    unableToInspect: "No se puede inspeccionar la pestaña",
+    noMetadata: "Sin metadatos",
+    basic: "Información básica",
+    document: "Documento",
+    languages: "Idiomas",
+    openGraph: "Open Graph",
+    etc: "Otros",
+    httpResponse: "Respuesta HTTP",
+    jsonLdSummary: "Resumen JSON-LD",
+    title: "título",
+    metaTitle: "meta título",
+    metaDescription: "meta descripción",
+    canonicalUrl: "URL canónica",
+    charset: "codificación",
+    viewport: "viewport",
+    favicon: "favicon",
+    themeColor: "color del tema",
+    htmlLang: "idioma del documento",
+    hreflang: "idiomas alternativos",
+    blocks: "bloques",
+    valid: "válidos",
+    invalid: "errores",
+    types: "@type",
+    parseErrors: "errores de análisis",
+    raw: "Original",
+    noValidJsonLd: "No hay JSON-LD válido",
+    status: "estado",
+    finalUrl: "URL final",
+    redirected: "redirección",
+    contentType: "tipo de contenido",
+    xRobotsTag: "X-Robots-Tag",
+    error: "error",
+    yes: "Sí",
+    no: "No",
+    stateHelp: "Ayuda de estados",
+    stateHelpTitle: "Guía de estados de metadatos",
+    stateHelpIntro:
+      "Los estados comparan los metadatos del DOM actual con la respuesta HTML original.",
+    close: "Cerrar",
+    displaySettings: "Configuración de visualización",
+    displaySettingsTitle: "Elegir metadatos visibles",
+    displaySettingsIntro:
+      "Selecciona una sección completa o los elementos individuales que quieras mostrar.",
+    save: "Aplicar",
+    resetDefaults: "Restaurar valores predeterminados",
+    inspectionStatus: "Estado de inspección",
+    message: "mensaje",
+    protectedPageMessage:
+      "Las páginas protegidas de Chrome no se pueden inspeccionar. Abre un sitio web normal e inténtalo de nuevo.",
+    inspectionFailedMessage: "No se pudieron leer los metadatos de esta página.",
+    noJsonLd: "Sin JSON-LD",
+  },
+  pt_BR: {
+    reload: "Atualizar",
+    unableToInspect: "Não foi possível inspecionar a guia",
+    noMetadata: "Sem metadados",
+    basic: "Informações básicas",
+    document: "Documento",
+    languages: "Idiomas",
+    openGraph: "Open Graph",
+    etc: "Outros",
+    httpResponse: "Resposta HTTP",
+    jsonLdSummary: "Resumo JSON-LD",
+    title: "título",
+    metaTitle: "meta título",
+    metaDescription: "meta descrição",
+    canonicalUrl: "URL canônica",
+    charset: "codificação",
+    viewport: "viewport",
+    favicon: "favicon",
+    themeColor: "cor do tema",
+    htmlLang: "idioma do documento",
+    hreflang: "idiomas alternativos",
+    blocks: "blocos",
+    valid: "válidos",
+    invalid: "erros",
+    types: "@type",
+    parseErrors: "erros de análise",
+    raw: "Original",
+    noValidJsonLd: "Nenhum JSON-LD válido",
+    status: "status",
+    finalUrl: "URL final",
+    redirected: "redirecionamento",
+    contentType: "tipo de conteúdo",
+    xRobotsTag: "X-Robots-Tag",
+    error: "erro",
+    yes: "Sim",
+    no: "Não",
+    stateHelp: "Ajuda de estados",
+    stateHelpTitle: "Guia de estados dos metadados",
+    stateHelpIntro:
+      "Os estados comparam os metadados do DOM atual com a resposta HTML original.",
+    close: "Fechar",
+    displaySettings: "Configurações de exibição",
+    displaySettingsTitle: "Escolher metadados visíveis",
+    displaySettingsIntro:
+      "Selecione uma seção inteira ou os itens individuais que deseja exibir.",
+    save: "Aplicar",
+    resetDefaults: "Restaurar padrões",
+    inspectionStatus: "Status da inspeção",
+    message: "mensagem",
+    protectedPageMessage:
+      "As páginas protegidas do Chrome não podem ser inspecionadas. Abra um site comum e tente novamente.",
+    inspectionFailedMessage: "Não foi possível ler os metadados desta página.",
+    noJsonLd: "Sem JSON-LD",
   },
 };
 
@@ -977,11 +1139,14 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 });
 
-const languageToggle = document.getElementById("languageToggle");
-if (languageToggle) {
-  languageToggle.textContent = t("switchLanguage");
-  languageToggle.addEventListener("click", () => {
-    localStorage.setItem(LANGUAGE_STORAGE_KEY, locale === "en" ? "ko" : "en");
+const languageSelect = document.getElementById("languageSelect");
+if (languageSelect) {
+  languageSelect.value = locale;
+  languageSelect.addEventListener("change", () => {
+    const nextLocale = supportedLocales.has(languageSelect.value)
+      ? languageSelect.value
+      : "en";
+    localStorage.setItem(LANGUAGE_STORAGE_KEY, nextLocale);
     window.location.reload();
   });
 }

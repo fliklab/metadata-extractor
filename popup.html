@@ -68,6 +68,15 @@
         color: var(--text);
         border-color: #2b3242;
       }
+      .language-select {
+        max-width: 118px;
+        padding: 6px 8px;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        background: var(--bg);
+        color: var(--text);
+        cursor: pointer;
+      }
       .section {
         background: var(--card);
         border: 1px solid var(--border);
@@ -403,7 +412,13 @@
         <div class="actions">
           <button id="displaySettings" class="icon" aria-label="Display settings">⚙</button>
           <button id="stateHelp" class="icon">?</button>
-          <button id="languageToggle" class="icon">한국어</button>
+          <select id="languageSelect" class="language-select" aria-label="Language">
+            <option value="en">English</option>
+            <option value="ko">한국어</option>
+            <option value="ja">日本語</option>
+            <option value="es">Español</option>
+            <option value="pt_BR">Português (Brasil)</option>
+          </select>
           <button id="refreshPage" class="icon">Reload</button>
         </div>
       </div>

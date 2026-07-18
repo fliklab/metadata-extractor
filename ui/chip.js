@@ -37,17 +37,74 @@ const stateHelp = {
       description: "원본 HTML에는 있지만 현재 DOM에서 제거된 값입니다.",
     },
   },
+  ja: {
+    same: {
+      label: "同一",
+      description: "現在の DOM と元の HTML の値が一致しています。",
+    },
+    changed: {
+      label: "変更",
+      description: "現在の DOM の値が元の HTML と異なります。",
+    },
+    new: {
+      label: "追加",
+      description: "元の HTML にはなく、現在の DOM に追加された値です。",
+    },
+    removed: {
+      label: "削除",
+      description: "元の HTML にはありますが、現在の DOM から削除された値です。",
+    },
+  },
+  es: {
+    same: {
+      label: "Igual",
+      description: "El DOM actual coincide con el HTML original.",
+    },
+    changed: {
+      label: "Modificado",
+      description: "El DOM actual es diferente del HTML original.",
+    },
+    new: {
+      label: "Nuevo",
+      description: "Está en el DOM actual, pero no en el HTML original.",
+    },
+    removed: {
+      label: "Eliminado",
+      description: "Está en el HTML original, pero no en el DOM actual.",
+    },
+  },
+  pt_BR: {
+    same: {
+      label: "Igual",
+      description: "O DOM atual corresponde ao HTML original.",
+    },
+    changed: {
+      label: "Alterado",
+      description: "O DOM atual é diferente do HTML original.",
+    },
+    new: {
+      label: "Novo",
+      description: "Está no DOM atual, mas não no HTML original.",
+    },
+    removed: {
+      label: "Removido",
+      description: "Está no HTML original, mas não no DOM atual.",
+    },
+  },
 };
 
 function getStateHelp(language = "en") {
-  return stateHelp[language === "ko" ? "ko" : "en"];
+  return stateHelp[language] || stateHelp.en;
 }
 
 function getGhip(state, hint) {
-  const language =
-    typeof document !== "undefined" && document.documentElement.lang === "ko"
-      ? "ko"
-      : "en";
+  const documentLanguage =
+    typeof document !== "undefined" ? document.documentElement.lang : "en";
+  const language = documentLanguage.startsWith("pt")
+    ? "pt_BR"
+    : stateHelp[documentLanguage]
+    ? documentLanguage
+    : "en";
   const helpItem = getStateHelp(language)[state];
   const stateText =
     state === "same" || state === "changed" || state === "new" || state === "removed"

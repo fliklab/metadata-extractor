@@ -5,10 +5,19 @@ function buildRow({ key, value, original, code, state, hint }) {
   const safeValue = value ?? "N/A";
   const safeOriginal = original ?? "N/A";
   const hasCode = Boolean(code);
-  const showSourceLabel =
-    typeof document !== "undefined" && document.documentElement.lang === "ko"
-      ? "전체 값과 원본 보기"
-      : "Show full value and source";
+  const documentLanguage =
+    typeof document !== "undefined" ? document.documentElement.lang : "en";
+  const sourceLabels = {
+    en: "Show full value and source",
+    ko: "전체 값과 원본 보기",
+    ja: "完全な値とソースを表示",
+    es: "Mostrar el valor completo y el código fuente",
+    pt_BR: "Mostrar o valor completo e o código-fonte",
+  };
+  const labelLanguage = documentLanguage.startsWith("pt")
+    ? "pt_BR"
+    : documentLanguage;
+  const showSourceLabel = sourceLabels[labelLanguage] || sourceLabels.en;
   const codeId = `code-${key
     .replace(/[^a-z0-9]/gi, "-")
     .toLowerCase()}-${Math.random().toString(36).slice(2, 7)}`;
