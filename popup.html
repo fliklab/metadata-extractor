@@ -131,6 +131,19 @@
         word-break: break-word;
         overflow-wrap: anywhere;
       }
+      .value-text {
+        white-space: pre-wrap;
+      }
+      .row.has-code:not(.expanded) .value-text {
+        display: -webkit-box;
+        -webkit-box-orient: vertical;
+        -webkit-line-clamp: 3;
+        overflow: hidden;
+      }
+      .row.expanded .value-text {
+        display: block;
+        overflow: visible;
+      }
       .chip {
         font-size: 11px;
         color: var(--ok);

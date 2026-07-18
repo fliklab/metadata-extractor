@@ -22,12 +22,15 @@ function buildRow({ key, value, original, code, state, hint }) {
       : escapeHtml(safeValue);
 
   return `
-      <div class="row ${stateClass}">
+      <div class="row ${stateClass} ${hasCode ? "has-code" : ""}">
         <div class="key">${key}</div>
-        <div class="value">${displayValue} ${chip}</div>
+        <div class="value">
+          <div class="value-text">${displayValue}</div>
+          ${chip}
+        </div>
         <div class="tools">${
           hasCode
-            ? `<button class="code-btn" data-target="${codeId}">&lt;/&gt;</button>`
+            ? `<button class="code-btn" data-target="${codeId}" aria-expanded="false" title="Show full value and source">&lt;/&gt;</button>`
             : ""
         }</div>
         ${hasCode ? `<pre id="${codeId}" class="code">${code}</pre>` : ""}
