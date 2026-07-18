@@ -1,3 +1,5 @@
+import buildRow from "./row.js";
+
 const getSectionTitle = (title) => {
   return `<div class="section-header"><div class="section-title">${title}</div></div>`;
 };
@@ -8,4 +10,5 @@ const getSectionList = (title, rows) => {
     .join("")}</div></div>`;
 };
 
+export { getSectionTitle, getSectionList };
 export default { getSectionTitle, getSectionList };

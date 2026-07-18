@@ -6,7 +6,7 @@ import {
   toLinkTag,
   escapeHtml,
 } from "./core/formatToTag.js";
-
+import getState from "./core/getState.js";
 import { getSectionList } from "./ui/section.js";
 
 document.addEventListener("DOMContentLoaded", function () {
@@ -17,7 +17,9 @@ document.addEventListener("DOMContentLoaded", function () {
     chrome.runtime.sendMessage(
       { action: "getRawHTML", url: activeTab.url },
       (response) => {
-        const rawMetadata = extractMetadataFromRawHTML(response.html);
+        const rawMetadata = response?.html
+          ? extractMetadataFromRawHTML(response.html)
+          : {};
 
         // 현재 DOM에서 메타데이터 가져오기
         chrome.tabs.sendMessage(

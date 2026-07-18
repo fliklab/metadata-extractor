@@ -1,4 +1,5 @@
 import getGhip from "./chip.js";
+import { escapeHtml } from "../core/formatToTag.js";
 
 function buildRow({ key, value, original, code, state, hint }) {
   const safeValue = value ?? "N/A";
