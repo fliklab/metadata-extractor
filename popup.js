@@ -282,6 +282,7 @@ document.addEventListener("DOMContentLoaded", () => {
             const tabError = chrome.runtime.lastError?.message;
             const metadata = data?.metadata;
             const sections = [];
+            const documentInfo = document.getElementById("documentInfo");
 
             if (metadata) {
               const basicList = [
@@ -464,11 +465,6 @@ document.addEventListener("DOMContentLoaded", () => {
                   getSectionOptions("basic")
                 ),
                 getSectionList(
-                  t("document"),
-                  documentList,
-                  getSectionOptions("document", true)
-                ),
-                getSectionList(
                   t("languages"),
                   languageList,
                   getSectionOptions("languages", true)
@@ -484,7 +480,18 @@ document.addEventListener("DOMContentLoaded", () => {
                   getSectionOptions("etc", true)
                 )
               );
+
+              if (documentInfo) {
+                documentInfo.innerHTML = getSectionList(
+                  t("document"),
+                  documentList,
+                  getSectionOptions("document", true)
+                );
+                bindCodeToggles(documentInfo);
+                bindSectionToggles(documentInfo);
+              }
             } else {
+              if (documentInfo) documentInfo.innerHTML = "";
               sections.push(
                 getSectionList(
                   tabError || t("noMetadata"),
