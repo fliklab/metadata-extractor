@@ -199,6 +199,9 @@
           "Noto Sans KR", "Malgun Gothic", "Segoe UI", Roboto, Helvetica, Arial,
           sans-serif;
       }
+      button.chip {
+        cursor: pointer;
+      }
       .chip.warn {
         color: var(--warn);
         border-color: rgba(245, 158, 11, 0.35);
@@ -225,29 +228,77 @@
         border-radius: 50%;
         font-size: 9px;
         font-weight: 700;
-        cursor: help;
+        cursor: inherit;
         opacity: 0.8;
-      }
-      .chip-tooltip {
-        position: fixed;
-        z-index: 100;
-        display: none;
-        width: 230px;
-        max-width: calc(100vw - 16px);
-        padding: 8px 10px;
-        border: 1px solid var(--border);
-        border-radius: 8px;
-        background: #181b23;
-        color: var(--text);
-        font-size: 11px;
-        font-weight: 400;
-        line-height: 1.4;
-        white-space: normal;
-        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
         pointer-events: none;
       }
-      .chip-tooltip.visible {
-        display: block;
+      .modal-backdrop {
+        position: fixed;
+        z-index: 100;
+        inset: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+        background: rgba(0, 0, 0, 0.68);
+      }
+      .modal-backdrop[hidden] {
+        display: none;
+      }
+      .help-modal {
+        width: min(420px, 100%);
+        max-height: calc(100vh - 40px);
+        overflow: auto;
+        padding: 18px;
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        background: #181b23;
+        color: var(--text);
+        box-shadow: 0 18px 50px rgba(0, 0, 0, 0.55);
+      }
+      .modal-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+      }
+      .modal-title {
+        margin: 0;
+        font-size: 16px;
+      }
+      .modal-close {
+        border: 0;
+        background: transparent;
+        color: var(--muted);
+        font-size: 22px;
+        cursor: pointer;
+      }
+      .modal-intro {
+        margin: 8px 0 16px;
+        color: var(--muted);
+        font-size: 12px;
+      }
+      .state-help-list {
+        display: grid;
+        gap: 8px;
+      }
+      .state-help-row {
+        display: grid;
+        grid-template-columns: 90px 1fr;
+        align-items: start;
+        gap: 10px;
+        padding: 10px;
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        background: var(--card);
+      }
+      .state-help-row .chip {
+        justify-self: start;
+      }
+      .state-help-row p {
+        margin: 0;
+        color: var(--muted);
+        font-size: 12px;
       }
       .code-btn {
         background: transparent;
@@ -297,6 +348,7 @@
       <div class="header">
         <div class="title">Meta Checker</div>
         <div class="actions">
+          <button id="stateHelp" class="icon">?</button>
           <button id="languageToggle" class="icon">한국어</button>
           <button id="refreshPage" class="icon">Reload</button>
         </div>
@@ -306,7 +358,23 @@
       <div id="jsonld" class="section"></div>
       <div id="documentInfo"></div>
     </div>
-    <div id="chipTooltip" class="chip-tooltip" role="tooltip"></div>
+    <div
+      id="stateHelpModal"
+      class="modal-backdrop"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="stateHelpTitle"
+      hidden
+    >
+      <div class="help-modal">
+        <div class="modal-header">
+          <h2 id="stateHelpTitle" class="modal-title"></h2>
+          <button type="button" class="modal-close">×</button>
+        </div>
+        <p id="stateHelpIntro" class="modal-intro"></p>
+        <div id="stateHelpContent" class="state-help-list"></div>
+      </div>
+    </div>
     <script src="popup.js" type="module"></script>
   </body>
 </html>

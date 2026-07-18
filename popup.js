@@ -8,6 +8,7 @@ import {
 } from "./core/formatToTag.js";
 import getState from "./core/getState.js";
 import { getSectionList } from "./ui/section.js";
+import { getStateHelp } from "./ui/chip.js";
 
 const LANGUAGE_STORAGE_KEY = "meta-checker-language";
 const locale = localStorage.getItem(LANGUAGE_STORAGE_KEY) === "ko" ? "ko" : "en";
@@ -51,6 +52,11 @@ const messages = {
     error: "error",
     yes: "Yes",
     no: "No",
+    stateHelp: "State help",
+    stateHelpTitle: "Metadata state guide",
+    stateHelpIntro:
+      "States compare metadata in the current DOM with the original HTML response.",
+    close: "Close",
   },
   ko: {
     reload: "새로고침",
@@ -89,6 +95,11 @@ const messages = {
     error: "오류",
     yes: "예",
     no: "아니요",
+    stateHelp: "상태 도움말",
+    stateHelpTitle: "메타데이터 상태 안내",
+    stateHelpIntro:
+      "현재 DOM의 메타데이터를 최초 HTML 응답과 비교한 결과입니다.",
+    close: "닫기",
   },
 };
 
@@ -186,57 +197,68 @@ function bindSectionToggles(container) {
   });
 }
 
-function showChipTooltip(target) {
-  const tooltip = document.getElementById("chipTooltip");
-  const description = target.dataset.tooltip;
-  if (!tooltip || !description) return;
+let stateHelpTrigger = null;
 
-  tooltip.textContent = description;
-  tooltip.classList.add("visible");
-
-  const targetRect = target.getBoundingClientRect();
-  const tooltipRect = tooltip.getBoundingClientRect();
-  const gap = 8;
-  const viewportPadding = 8;
-  const maxLeft = window.innerWidth - tooltipRect.width - viewportPadding;
-  const left = Math.min(
-    Math.max(viewportPadding, targetRect.right - tooltipRect.width),
-    maxLeft
-  );
-
-  let top = targetRect.top - tooltipRect.height - gap;
-  if (top < viewportPadding) top = targetRect.bottom + gap;
-  top = Math.min(
-    Math.max(viewportPadding, top),
-    window.innerHeight - tooltipRect.height - viewportPadding
-  );
-
-  tooltip.style.left = `${left}px`;
-  tooltip.style.top = `${top}px`;
+function openStateHelpModal(trigger) {
+  const modal = document.getElementById("stateHelpModal");
+  if (!modal) return;
+  stateHelpTrigger = trigger || document.activeElement;
+  modal.hidden = false;
+  modal.querySelector(".modal-close")?.focus();
 }
 
-function hideChipTooltip() {
-  document.getElementById("chipTooltip")?.classList.remove("visible");
+function closeStateHelpModal() {
+  const modal = document.getElementById("stateHelpModal");
+  if (!modal || modal.hidden) return;
+  modal.hidden = true;
+  stateHelpTrigger?.focus?.();
+  stateHelpTrigger = null;
 }
 
-document.addEventListener("mouseover", (event) => {
-  const target = event.target.closest?.(".chip-help");
-  if (target) showChipTooltip(target);
-});
+function initializeStateHelpModal() {
+  const modal = document.getElementById("stateHelpModal");
+  const title = document.getElementById("stateHelpTitle");
+  const intro = document.getElementById("stateHelpIntro");
+  const content = document.getElementById("stateHelpContent");
+  const closeButton = modal?.querySelector(".modal-close");
+  const help = getStateHelp(locale);
 
-document.addEventListener("mouseout", (event) => {
-  const target = event.target.closest?.(".chip-help");
-  if (target && !target.contains(event.relatedTarget)) hideChipTooltip();
-});
+  if (!modal || !title || !intro || !content || !closeButton) return;
+  title.textContent = t("stateHelpTitle");
+  intro.textContent = t("stateHelpIntro");
+  closeButton.setAttribute("aria-label", t("close"));
+  content.innerHTML = ["same", "new", "changed", "removed"]
+    .map(
+      (state) => `<div class="state-help-row">
+        <span class="chip ${
+          state === "changed"
+            ? "warn"
+            : state === "new"
+            ? "info"
+            : state === "removed"
+            ? "danger"
+            : ""
+        }">${help[state].label}</span>
+        <p>${help[state].description}</p>
+      </div>`
+    )
+    .join("");
 
-document.addEventListener("focusin", (event) => {
-  const target = event.target.closest?.(".chip-help");
-  if (target) showChipTooltip(target);
-});
-
-document.addEventListener("focusout", (event) => {
-  if (event.target.closest?.(".chip-help")) hideChipTooltip();
-});
+  document.getElementById("stateHelp")?.addEventListener("click", (event) => {
+    openStateHelpModal(event.currentTarget);
+  });
+  closeButton.addEventListener("click", closeStateHelpModal);
+  modal.addEventListener("click", (event) => {
+    if (event.target === modal) closeStateHelpModal();
+  });
+  document.addEventListener("click", (event) => {
+    const chip = event.target.closest?.(".chip[data-state-help]");
+    if (chip) openStateHelpModal(chip);
+  });
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape") closeStateHelpModal();
+  });
+}
 
 function renderJsonLd({ jsonldData, jsonldErrors, jsonldTotal }) {
   const container = document.getElementById("jsonld");
@@ -630,6 +652,10 @@ if (languageToggle) {
     window.location.reload();
   });
 }
+
+const stateHelpButton = document.getElementById("stateHelp");
+if (stateHelpButton) stateHelpButton.setAttribute("aria-label", t("stateHelp"));
+initializeStateHelpModal();
 
 const refreshButton = document.getElementById("refreshPage");
 if (refreshButton) refreshButton.textContent = t("reload");
