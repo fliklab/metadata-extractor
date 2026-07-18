@@ -223,8 +223,8 @@ function renderJsonLd({ jsonldData, jsonldErrors, jsonldTotal }) {
       <button class="section-toggle" type="button" aria-expanded="${String(
         !sectionOptions.collapsed
       )}">
+        <span class="section-chevron" aria-hidden="true">›</span>
         <span class="section-title">${t("jsonLdSummary")}</span>
-        <span class="section-chevron" aria-hidden="true">⌄</span>
       </button>
       <div class="tools">
         ${

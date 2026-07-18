@@ -5,8 +5,8 @@ const getSectionTitle = (title, collapsed = false) => {
     <button class="section-toggle" type="button" aria-expanded="${String(
       !collapsed
     )}">
+      <span class="section-chevron" aria-hidden="true">›</span>
       <span class="section-title">${title}</span>
-      <span class="section-chevron" aria-hidden="true">⌄</span>
     </button>
   </div>`;
 };
