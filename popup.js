@@ -64,6 +64,12 @@ const messages = {
       "Select an entire section or choose individual items to show.",
     save: "Apply",
     resetDefaults: "Reset defaults",
+    inspectionStatus: "Inspection status",
+    message: "message",
+    protectedPageMessage:
+      "Chrome-protected pages cannot be inspected. Open a regular website and try again.",
+    inspectionFailedMessage: "Metadata could not be read from this page.",
+    noJsonLd: "No JSON-LD",
   },
   ko: {
     reload: "새로고침",
@@ -113,6 +119,12 @@ const messages = {
       "섹션 전체 또는 화면에 표시할 개별 항목을 선택하세요.",
     save: "적용",
     resetDefaults: "기본값 복원",
+    inspectionStatus: "검사 상태",
+    message: "안내",
+    protectedPageMessage:
+      "Chrome 보호 페이지는 확장 프로그램에서 검사할 수 없습니다. 일반 웹사이트를 열고 다시 시도하세요.",
+    inspectionFailedMessage: "이 페이지에서 메타데이터를 읽지 못했습니다.",
+    noJsonLd: "JSON-LD 없음",
   },
 };
 
@@ -245,6 +257,21 @@ function getSectionOptions(id, defaultCollapsed = false) {
     id,
     collapsed: saved == null ? defaultCollapsed : saved === "true",
   };
+}
+
+function isProtectedBrowserPage(url = "") {
+  return /^(chrome|chrome-extension|edge|about):/i.test(url);
+}
+
+function getInspectionErrorRows(url) {
+  return [
+    {
+      key: t("message"),
+      value: isProtectedBrowserPage(url)
+        ? t("protectedPageMessage")
+        : t("inspectionFailedMessage"),
+    },
+  ];
 }
 
 function formatHreflang(items) {
@@ -568,6 +595,24 @@ function renderJsonLd({ jsonldData, jsonldErrors, jsonldTotal }) {
   container.dataset.sectionId = sectionOptions.id;
   container.classList.toggle("collapsed", sectionOptions.collapsed);
 
+  if (total === 0) {
+    container.innerHTML = `
+      <div class="section-header">
+        <button class="section-toggle" type="button" aria-expanded="${String(
+          !sectionOptions.collapsed
+        )}">
+          <span class="section-chevron" aria-hidden="true">›</span>
+          <span class="section-title">${t("jsonLdSummary")}</span>
+        </button>
+      </div>
+      <div class="list">
+        <div class="empty-state">${t("noJsonLd")}</div>
+      </div>
+    `;
+    bindSectionToggles(container);
+    return;
+  }
+
   container.innerHTML = `
     <div class="section-header">
       <button class="section-toggle" type="button" aria-expanded="${String(
@@ -629,7 +674,7 @@ document.addEventListener("DOMContentLoaded", () => {
           activeTab.id,
           { action: "getCurrentMetadata" },
           (data) => {
-            const tabError = chrome.runtime.lastError?.message;
+            void chrome.runtime.lastError;
             const metadata = data?.metadata;
             const sections = [];
             const documentInfo = document.getElementById("documentInfo");
@@ -850,9 +895,9 @@ document.addEventListener("DOMContentLoaded", () => {
               if (documentInfo) documentInfo.innerHTML = "";
               sections.push(
                 getSectionList(
-                  tabError || t("noMetadata"),
-                  [],
-                  getSectionOptions("no-metadata")
+                  t("inspectionStatus"),
+                  getInspectionErrorRows(activeTab.url),
+                  getSectionOptions("inspection-status")
                 )
               );
             }
@@ -900,7 +945,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 true
               );
               if (httpSection) sections.push(httpSection);
-            } else if (fetchError) {
+            } else if (fetchError && metadata) {
               const errorSection = getVisibleSection(
                 "http-response",
                 t("httpResponse"),
