@@ -9,7 +9,99 @@ import {
 import getState from "./core/getState.js";
 import { getSectionList } from "./ui/section.js";
 
+const LANGUAGE_STORAGE_KEY = "meta-checker-language";
+const locale = localStorage.getItem(LANGUAGE_STORAGE_KEY) === "ko" ? "ko" : "en";
+document.documentElement.lang = locale;
+
+const messages = {
+  en: {
+    reload: "Reload",
+    switchLanguage: "한국어",
+    unableToInspect: "Unable to inspect tab",
+    noMetadata: "No Metadata",
+    basic: "Basic",
+    document: "Document",
+    languages: "Languages",
+    openGraph: "Open Graph",
+    etc: "Etc",
+    httpResponse: "HTTP Response",
+    jsonLdSummary: "JSON-LD Summary",
+    title: "title",
+    metaTitle: "meta title",
+    metaDescription: "meta description",
+    canonicalUrl: "canonical url",
+    charset: "charset",
+    viewport: "viewport",
+    favicon: "favicon",
+    themeColor: "theme-color",
+    htmlLang: "html lang",
+    hreflang: "hreflang",
+    blocks: "blocks",
+    valid: "valid",
+    invalid: "invalid",
+    types: "@type",
+    parseErrors: "parse errors",
+    raw: "Raw",
+    noValidJsonLd: "No valid JSON-LD",
+    status: "status",
+    finalUrl: "final url",
+    redirected: "redirected",
+    contentType: "content-type",
+    xRobotsTag: "x-robots-tag",
+    error: "error",
+    yes: "Yes",
+    no: "No",
+  },
+  ko: {
+    reload: "새로고침",
+    switchLanguage: "English",
+    unableToInspect: "탭을 확인할 수 없음",
+    noMetadata: "메타데이터 없음",
+    basic: "기본 정보",
+    document: "문서 정보",
+    languages: "다국어 정보",
+    openGraph: "오픈 그래프",
+    etc: "기타",
+    httpResponse: "HTTP 응답",
+    jsonLdSummary: "JSON-LD 요약",
+    title: "제목",
+    metaTitle: "메타 제목",
+    metaDescription: "메타 설명",
+    canonicalUrl: "대표 URL",
+    charset: "문자 인코딩",
+    viewport: "뷰포트",
+    favicon: "파비콘",
+    themeColor: "테마 색상",
+    htmlLang: "문서 언어",
+    hreflang: "대체 언어",
+    blocks: "전체 블록",
+    valid: "정상",
+    invalid: "오류",
+    types: "@type",
+    parseErrors: "파싱 오류",
+    raw: "원문",
+    noValidJsonLd: "정상 JSON-LD 없음",
+    status: "상태",
+    finalUrl: "최종 URL",
+    redirected: "리디렉션",
+    contentType: "콘텐츠 유형",
+    xRobotsTag: "X-Robots-Tag",
+    error: "오류",
+    yes: "예",
+    no: "아니요",
+  },
+};
+
+const t = (key) => messages[locale][key] ?? key;
 const sourceValue = (current, original) => original ?? current;
+
+function getSectionOptions(id, defaultCollapsed = false) {
+  const saved = localStorage.getItem(`meta-checker-section-${id}`);
+  return {
+    id,
+    collapsed: saved == null ? defaultCollapsed : saved === "true",
+  };
+}
 
 function formatHreflang(items) {
   if (!items?.length) return null;
@@ -75,6 +167,25 @@ function bindCodeToggles(container) {
   });
 }
 
+function bindSectionToggles(container) {
+  container.querySelectorAll(".section-toggle").forEach((button) => {
+    button.addEventListener("click", () => {
+      const section = button.closest(".section");
+      if (!section) return;
+
+      const collapsed = section.classList.toggle("collapsed");
+      button.setAttribute("aria-expanded", String(!collapsed));
+      const sectionId = section.dataset.sectionId;
+      if (sectionId) {
+        localStorage.setItem(
+          `meta-checker-section-${sectionId}`,
+          String(collapsed)
+        );
+      }
+    });
+  });
+}
+
 function renderJsonLd({ jsonldData, jsonldErrors, jsonldTotal }) {
   const container = document.getElementById("jsonld");
   if (!container) return;
@@ -84,32 +195,43 @@ function renderJsonLd({ jsonldData, jsonldErrors, jsonldTotal }) {
   const types = collectJsonLdTypes(data);
   const total = jsonldTotal ?? data.length + errors.length;
   const rawId = `jsonld-${Math.random().toString(36).slice(2, 7)}`;
+  const sectionOptions = getSectionOptions("jsonld");
   const summaryRows = [
-    { key: "blocks", value: total },
-    { key: "valid", value: data.length },
-    { key: "invalid", value: errors.length },
+    { key: t("blocks"), value: total },
+    { key: t("valid"), value: data.length },
+    { key: t("invalid"), value: errors.length },
     {
-      key: "@type",
+      key: t("types"),
       value: types.length ? types.join(", ") : null,
       code: types.length ? escapeHtml(types.join("\n")) : null,
     },
     {
-      key: "parse errors",
+      key: t("parseErrors"),
       value: errors.length ? errors.join("\n") : null,
       code: errors.length ? escapeHtml(errors.join("\n")) : null,
     },
   ];
   const pretty = data.length
     ? escapeHtml(JSON.stringify(data, null, 2))
-    : "No valid JSON-LD";
+    : t("noValidJsonLd");
+
+  container.dataset.sectionId = sectionOptions.id;
+  container.classList.toggle("collapsed", sectionOptions.collapsed);
 
   container.innerHTML = `
     <div class="section-header">
-      <div class="section-title">JSON-LD Summary</div>
+      <button class="section-toggle" type="button" aria-expanded="${String(
+        !sectionOptions.collapsed
+      )}">
+        <span class="section-title">${t("jsonLdSummary")}</span>
+        <span class="section-chevron" aria-hidden="true">⌄</span>
+      </button>
       <div class="tools">
         ${
           data.length
-            ? `<button class="code-btn" data-target="${rawId}" aria-expanded="false">Raw</button>`
+            ? `<button class="code-btn" data-target="${rawId}" aria-expanded="false">${t(
+                "raw"
+              )}</button>`
             : ""
         }
       </div>
@@ -123,6 +245,7 @@ function renderJsonLd({ jsonldData, jsonldErrors, jsonldTotal }) {
   `;
 
   bindCodeToggles(container);
+  bindSectionToggles(container);
 }
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -132,7 +255,12 @@ document.addEventListener("DOMContentLoaded", () => {
     const activeUrl = document.getElementById("activeUrl");
 
     if (!activeTab) {
-      groups.innerHTML = getSectionList("Unable to inspect tab", []);
+      groups.innerHTML = getSectionList(
+        t("unableToInspect"),
+        [],
+        getSectionOptions("error")
+      );
+      bindSectionToggles(groups);
       return;
     }
 
@@ -158,14 +286,14 @@ document.addEventListener("DOMContentLoaded", () => {
             if (metadata) {
               const basicList = [
                 {
-                  key: "title",
+                  key: t("title"),
                   value: metadata.title,
                   original: rawMetadata.title,
                   code: toTitleTag(sourceValue(metadata.title, rawMetadata.title)),
                   state: getState(metadata.title, rawMetadata.title),
                 },
                 {
-                  key: "meta title",
+                  key: t("metaTitle"),
                   value: metadata.metaTitle,
                   original: rawMetadata.metaTitle,
                   code: toMetaTag(
@@ -176,7 +304,7 @@ document.addEventListener("DOMContentLoaded", () => {
                   state: getState(metadata.metaTitle, rawMetadata.metaTitle),
                 },
                 {
-                  key: "meta description",
+                  key: t("metaDescription"),
                   value: metadata.metaDescription,
                   original: rawMetadata.metaDescription,
                   code: toMetaTag(
@@ -193,7 +321,7 @@ document.addEventListener("DOMContentLoaded", () => {
                   ),
                 },
                 {
-                  key: "canonical url",
+                  key: t("canonicalUrl"),
                   value: metadata.canonicalUrl,
                   original: rawMetadata.canonicalUrl,
                   code: toLinkTag(
@@ -209,7 +337,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
               const documentList = [
                 {
-                  key: "charset",
+                  key: t("charset"),
                   value: metadata.charset,
                   original: rawMetadata.charset,
                   code: toCharsetTag(
@@ -221,7 +349,7 @@ document.addEventListener("DOMContentLoaded", () => {
                   ),
                 },
                 {
-                  key: "viewport",
+                  key: t("viewport"),
                   value: metadata.viewport,
                   original: rawMetadata.viewport,
                   code: toMetaTag(
@@ -232,7 +360,7 @@ document.addEventListener("DOMContentLoaded", () => {
                   state: getState(metadata.viewport, rawMetadata.viewport),
                 },
                 {
-                  key: "favicon",
+                  key: t("favicon"),
                   value: metadata.favicon,
                   original: rawMetadata.favicon,
                   code: toLinkTag(
@@ -242,7 +370,7 @@ document.addEventListener("DOMContentLoaded", () => {
                   state: getState(metadata.favicon, rawMetadata.favicon),
                 },
                 {
-                  key: "theme-color",
+                  key: t("themeColor"),
                   value: metadata.themeColor,
                   original: rawMetadata.themeColor,
                   code: toMetaTag(
@@ -258,7 +386,7 @@ document.addEventListener("DOMContentLoaded", () => {
               const originalHreflang = formatHreflang(rawMetadata.hreflang);
               const languageList = [
                 {
-                  key: "html lang",
+                  key: t("htmlLang"),
                   value: metadata.language,
                   original: rawMetadata.language,
                   code: toHtmlLangTag(
@@ -267,7 +395,7 @@ document.addEventListener("DOMContentLoaded", () => {
                   state: getState(metadata.language, rawMetadata.language),
                 },
                 {
-                  key: "hreflang",
+                  key: t("hreflang"),
                   value: currentHreflang,
                   original: originalHreflang,
                   code: toHreflangTags(
@@ -330,63 +458,99 @@ document.addEventListener("DOMContentLoaded", () => {
               ];
 
               sections.push(
-                getSectionList("Basic", basicList),
-                getSectionList("Document", documentList),
-                getSectionList("Languages", languageList),
-                getSectionList("Open Graph", ogList),
-                getSectionList("Etc", etcList)
+                getSectionList(
+                  t("basic"),
+                  basicList,
+                  getSectionOptions("basic")
+                ),
+                getSectionList(
+                  t("document"),
+                  documentList,
+                  getSectionOptions("document", true)
+                ),
+                getSectionList(
+                  t("languages"),
+                  languageList,
+                  getSectionOptions("languages", true)
+                ),
+                getSectionList(
+                  t("openGraph"),
+                  ogList,
+                  getSectionOptions("open-graph")
+                ),
+                getSectionList(
+                  t("etc"),
+                  etcList,
+                  getSectionOptions("etc", true)
+                )
               );
             } else {
               sections.push(
-                getSectionList(tabError || "No Metadata", [])
+                getSectionList(
+                  tabError || t("noMetadata"),
+                  [],
+                  getSectionOptions("no-metadata")
+                )
               );
             }
 
             if (httpInfo) {
               sections.push(
-                getSectionList("HTTP Response", [
-                  {
-                    key: "status",
-                    value: `${httpInfo.status} ${httpInfo.statusText}`.trim(),
-                  },
-                  {
-                    key: "final url",
-                    value: httpInfo.finalUrl,
-                    code: httpInfo.finalUrl
-                      ? escapeHtml(httpInfo.finalUrl)
-                      : null,
-                  },
-                  { key: "redirected", value: String(httpInfo.redirected) },
-                  {
-                    key: "content-type",
-                    value: httpInfo.contentType,
-                    code: httpInfo.contentType
-                      ? escapeHtml(httpInfo.contentType)
-                      : null,
-                  },
-                  {
-                    key: "x-robots-tag",
-                    value: httpInfo.xRobotsTag,
-                    code: httpInfo.xRobotsTag
-                      ? escapeHtml(httpInfo.xRobotsTag)
-                      : null,
-                  },
-                ])
+                getSectionList(
+                  t("httpResponse"),
+                  [
+                    {
+                      key: t("status"),
+                      value: `${httpInfo.status} ${httpInfo.statusText}`.trim(),
+                    },
+                    {
+                      key: t("finalUrl"),
+                      value: httpInfo.finalUrl,
+                      code: httpInfo.finalUrl
+                        ? escapeHtml(httpInfo.finalUrl)
+                        : null,
+                    },
+                    {
+                      key: t("redirected"),
+                      value: httpInfo.redirected ? t("yes") : t("no"),
+                    },
+                    {
+                      key: t("contentType"),
+                      value: httpInfo.contentType,
+                      code: httpInfo.contentType
+                        ? escapeHtml(httpInfo.contentType)
+                        : null,
+                    },
+                    {
+                      key: t("xRobotsTag"),
+                      value: httpInfo.xRobotsTag,
+                      code: httpInfo.xRobotsTag
+                        ? escapeHtml(httpInfo.xRobotsTag)
+                        : null,
+                    },
+                  ],
+                  getSectionOptions("http-response", true)
+                )
               );
             } else if (fetchError) {
               sections.push(
-                getSectionList("HTTP Response", [
-                  {
-                    key: "error",
-                    value: fetchError,
-                    code: escapeHtml(fetchError),
-                  },
-                ])
+                getSectionList(
+                  t("httpResponse"),
+                  [
+                    {
+                      key: t("error"),
+                      value: fetchError,
+                      code: escapeHtml(fetchError),
+                    },
+                  ],
+                  getSectionOptions("http-response", true)
+                )
               );
             }
 
             groups.innerHTML = sections.join("");
             bindCodeToggles(groups);
+            bindSectionToggles(groups);
             renderJsonLd({
               jsonldData: data?.jsonldData,
               jsonldErrors: data?.jsonldErrors,
@@ -399,7 +563,18 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 });
 
-document.getElementById("refreshPage")?.addEventListener("click", () => {
+const languageToggle = document.getElementById("languageToggle");
+if (languageToggle) {
+  languageToggle.textContent = t("switchLanguage");
+  languageToggle.addEventListener("click", () => {
+    localStorage.setItem(LANGUAGE_STORAGE_KEY, locale === "en" ? "ko" : "en");
+    window.location.reload();
+  });
+}
+
+const refreshButton = document.getElementById("refreshPage");
+if (refreshButton) refreshButton.textContent = t("reload");
+refreshButton?.addEventListener("click", () => {
   chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
     const activeTab = tabs[0];
     if (activeTab) chrome.tabs.reload(activeTab.id);
