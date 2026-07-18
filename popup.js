@@ -11,6 +11,7 @@ import { getSectionList } from "./ui/section.js";
 import { getStateHelp } from "./ui/chip.js";
 
 const LANGUAGE_STORAGE_KEY = "meta-checker-language";
+const DISPLAY_STORAGE_KEY = "meta-checker-visible-items";
 const locale = localStorage.getItem(LANGUAGE_STORAGE_KEY) === "ko" ? "ko" : "en";
 document.documentElement.lang = locale;
 
@@ -57,6 +58,12 @@ const messages = {
     stateHelpIntro:
       "States compare metadata in the current DOM with the original HTML response.",
     close: "Close",
+    displaySettings: "Display settings",
+    displaySettingsTitle: "Choose visible metadata",
+    displaySettingsIntro:
+      "Select an entire section or choose individual items to show.",
+    save: "Apply",
+    resetDefaults: "Reset defaults",
   },
   ko: {
     reload: "새로고침",
@@ -100,11 +107,137 @@ const messages = {
     stateHelpIntro:
       "현재 DOM의 메타데이터를 최초 HTML 응답과 비교한 결과입니다.",
     close: "닫기",
+    displaySettings: "표시 설정",
+    displaySettingsTitle: "표시할 메타데이터 선택",
+    displaySettingsIntro:
+      "섹션 전체 또는 화면에 표시할 개별 항목을 선택하세요.",
+    save: "적용",
+    resetDefaults: "기본값 복원",
   },
 };
 
 const t = (key) => messages[locale][key] ?? key;
 const sourceValue = (current, original) => original ?? current;
+
+const defaultVisibleItems = new Set([
+  "basic.title",
+  "basic.meta-description",
+  "basic.canonical-url",
+  "open-graph.og-title",
+  "open-graph.og-description",
+  "open-graph.og-url",
+  "open-graph.og-image",
+  "etc.robots",
+  "http-response.status",
+  "http-response.final-url",
+  "http-response.x-robots-tag",
+  "http-response.error",
+  "jsonld.blocks",
+  "jsonld.invalid",
+  "jsonld.types",
+]);
+
+function getDisplaySections() {
+  return [
+    {
+      id: "basic",
+      label: t("basic"),
+      items: [
+        ["title", t("title")],
+        ["meta-title", t("metaTitle")],
+        ["meta-description", t("metaDescription")],
+        ["canonical-url", t("canonicalUrl")],
+      ],
+    },
+    {
+      id: "languages",
+      label: t("languages"),
+      items: [
+        ["html-lang", t("htmlLang")],
+        ["hreflang", t("hreflang")],
+      ],
+    },
+    {
+      id: "open-graph",
+      label: t("openGraph"),
+      items: [
+        ["og-title", "og:title"],
+        ["og-description", "og:description"],
+        ["og-type", "og:type"],
+        ["og-site-name", "og:site_name"],
+        ["og-url", "og:url"],
+        ["og-image", "og:image"],
+      ],
+    },
+    {
+      id: "etc",
+      label: t("etc"),
+      items: [
+        ["robots", "robots"],
+        ["storebot-google", "Storebot-Google"],
+      ],
+    },
+    {
+      id: "http-response",
+      label: t("httpResponse"),
+      items: [
+        ["status", t("status")],
+        ["final-url", t("finalUrl")],
+        ["redirected", t("redirected")],
+        ["content-type", t("contentType")],
+        ["x-robots-tag", t("xRobotsTag")],
+        ["error", t("error")],
+      ],
+    },
+    {
+      id: "jsonld",
+      label: t("jsonLdSummary"),
+      items: [
+        ["blocks", t("blocks")],
+        ["valid", t("valid")],
+        ["invalid", t("invalid")],
+        ["types", t("types")],
+        ["parse-errors", t("parseErrors")],
+      ],
+    },
+    {
+      id: "document",
+      label: t("document"),
+      items: [
+        ["charset", t("charset")],
+        ["viewport", t("viewport")],
+        ["favicon", t("favicon")],
+        ["theme-color", t("themeColor")],
+      ],
+    },
+  ];
+}
+
+function loadVisibleItems() {
+  try {
+    const saved = JSON.parse(localStorage.getItem(DISPLAY_STORAGE_KEY));
+    return Array.isArray(saved) ? new Set(saved) : new Set(defaultVisibleItems);
+  } catch {
+    return new Set(defaultVisibleItems);
+  }
+}
+
+const visibleItems = loadVisibleItems();
+
+function filterVisibleRows(sectionId, rows) {
+  return rows.filter((row) => visibleItems.has(`${sectionId}.${row.id}`));
+}
+
+function getVisibleSection(sectionId, title, rows, defaultCollapsed = false) {
+  const visibleRows = filterVisibleRows(sectionId, rows);
+  return visibleRows.length
+    ? getSectionList(
+        title,
+        visibleRows,
+        getSectionOptions(sectionId, defaultCollapsed)
+      )
+    : null;
+}
 
 function getSectionOptions(id, defaultCollapsed = false) {
   const saved = localStorage.getItem(`meta-checker-section-${id}`);
@@ -260,6 +393,140 @@ function initializeStateHelpModal() {
   });
 }
 
+let displaySettingsTrigger = null;
+
+function closeDisplaySettingsModal() {
+  const modal = document.getElementById("displaySettingsModal");
+  if (!modal || modal.hidden) return;
+  modal.hidden = true;
+  displaySettingsTrigger?.focus?.();
+  displaySettingsTrigger = null;
+}
+
+function updateSectionCheckbox(content, sectionId) {
+  const sectionCheckbox = content.querySelector(
+    `[data-section-check="${sectionId}"]`
+  );
+  const itemCheckboxes = Array.from(
+    content.querySelectorAll(`[data-section="${sectionId}"][data-item-check]`)
+  );
+  if (!sectionCheckbox || !itemCheckboxes.length) return;
+
+  const checkedCount = itemCheckboxes.filter((item) => item.checked).length;
+  sectionCheckbox.checked = checkedCount === itemCheckboxes.length;
+  sectionCheckbox.indeterminate = checkedCount > 0 && !sectionCheckbox.checked;
+}
+
+function renderDisplaySettingsChecklist(content, selectedItems) {
+  content.innerHTML = getDisplaySections()
+    .map(
+      (section) => `<div class="settings-section">
+        <label class="settings-section-label">
+          <input type="checkbox" data-section-check="${section.id}">
+          <span>${section.label}</span>
+        </label>
+        <div class="settings-items">
+          ${section.items
+            .map(
+              ([itemId, label]) => `<label class="settings-item-label">
+                <input type="checkbox" data-section="${
+                  section.id
+                }" data-item-check="${section.id}.${itemId}" ${
+                selectedItems.has(`${section.id}.${itemId}`) ? "checked" : ""
+              }>
+                <span>${label}</span>
+              </label>`
+            )
+            .join("")}
+        </div>
+      </div>`
+    )
+    .join("");
+
+  getDisplaySections().forEach((section) =>
+    updateSectionCheckbox(content, section.id)
+  );
+}
+
+function openDisplaySettingsModal(trigger) {
+  const modal = document.getElementById("displaySettingsModal");
+  const content = document.getElementById("displaySettingsContent");
+  if (!modal || !content) return;
+  displaySettingsTrigger = trigger || document.activeElement;
+  renderDisplaySettingsChecklist(content, visibleItems);
+  modal.hidden = false;
+  modal.querySelector(".modal-close")?.focus();
+}
+
+function initializeDisplaySettingsModal() {
+  const modal = document.getElementById("displaySettingsModal");
+  const title = document.getElementById("displaySettingsTitle");
+  const intro = document.getElementById("displaySettingsIntro");
+  const content = document.getElementById("displaySettingsContent");
+  const closeButton = modal?.querySelector(".modal-close");
+  const saveButton = document.getElementById("saveDisplaySettings");
+  const resetButton = document.getElementById("resetDisplaySettings");
+  const settingsButton = document.getElementById("displaySettings");
+
+  if (
+    !modal ||
+    !title ||
+    !intro ||
+    !content ||
+    !closeButton ||
+    !saveButton ||
+    !resetButton ||
+    !settingsButton
+  ) {
+    return;
+  }
+
+  title.textContent = t("displaySettingsTitle");
+  intro.textContent = t("displaySettingsIntro");
+  closeButton.setAttribute("aria-label", t("close"));
+  saveButton.textContent = t("save");
+  resetButton.textContent = t("resetDefaults");
+  settingsButton.setAttribute("aria-label", t("displaySettings"));
+
+  settingsButton.addEventListener("click", (event) =>
+    openDisplaySettingsModal(event.currentTarget)
+  );
+  closeButton.addEventListener("click", closeDisplaySettingsModal);
+  modal.addEventListener("click", (event) => {
+    if (event.target === modal) closeDisplaySettingsModal();
+  });
+  content.addEventListener("change", (event) => {
+    const checkbox = event.target;
+    const sectionId = checkbox.dataset.sectionCheck;
+    if (sectionId) {
+      content
+        .querySelectorAll(`[data-section="${sectionId}"][data-item-check]`)
+        .forEach((item) => {
+          item.checked = checkbox.checked;
+        });
+      checkbox.indeterminate = false;
+      return;
+    }
+
+    if (checkbox.dataset.section) {
+      updateSectionCheckbox(content, checkbox.dataset.section);
+    }
+  });
+  resetButton.addEventListener("click", () => {
+    renderDisplaySettingsChecklist(content, defaultVisibleItems);
+  });
+  saveButton.addEventListener("click", () => {
+    const selected = Array.from(
+      content.querySelectorAll("[data-item-check]:checked")
+    ).map((item) => item.dataset.itemCheck);
+    localStorage.setItem(DISPLAY_STORAGE_KEY, JSON.stringify(selected));
+    window.location.reload();
+  });
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape") closeDisplaySettingsModal();
+  });
+}
+
 function renderJsonLd({ jsonldData, jsonldErrors, jsonldTotal }) {
   const container = document.getElementById("jsonld");
   if (!container) return;
@@ -271,15 +538,17 @@ function renderJsonLd({ jsonldData, jsonldErrors, jsonldTotal }) {
   const rawId = `jsonld-${Math.random().toString(36).slice(2, 7)}`;
   const sectionOptions = getSectionOptions("jsonld");
   const summaryRows = [
-    { key: t("blocks"), value: total },
-    { key: t("valid"), value: data.length },
-    { key: t("invalid"), value: errors.length },
+    { id: "blocks", key: t("blocks"), value: total },
+    { id: "valid", key: t("valid"), value: data.length },
+    { id: "invalid", key: t("invalid"), value: errors.length },
     {
+      id: "types",
       key: t("types"),
       value: types.length ? types.join(", ") : null,
       code: types.length ? escapeHtml(types.join("\n")) : null,
     },
     {
+      id: "parse-errors",
       key: t("parseErrors"),
       value: errors.length ? errors.join("\n") : null,
       code: errors.length ? escapeHtml(errors.join("\n")) : null,
@@ -289,6 +558,13 @@ function renderJsonLd({ jsonldData, jsonldErrors, jsonldTotal }) {
     ? escapeHtml(JSON.stringify(data, null, 2))
     : t("noValidJsonLd");
 
+  const visibleRows = filterVisibleRows("jsonld", summaryRows);
+  if (!visibleRows.length) {
+    container.hidden = true;
+    return;
+  }
+
+  container.hidden = false;
   container.dataset.sectionId = sectionOptions.id;
   container.classList.toggle("collapsed", sectionOptions.collapsed);
 
@@ -311,7 +587,7 @@ function renderJsonLd({ jsonldData, jsonldErrors, jsonldTotal }) {
       </div>
     </div>
     <div class="list">
-      ${summaryRows.map((row) => buildRow(row)).join("")}
+      ${visibleRows.map((row) => buildRow(row)).join("")}
       <div class="row">
         <pre id="${rawId}" class="code jsonld">${pretty}</pre>
       </div>
@@ -361,6 +637,7 @@ document.addEventListener("DOMContentLoaded", () => {
             if (metadata) {
               const basicList = [
                 {
+                  id: "title",
                   key: t("title"),
                   value: metadata.title,
                   original: rawMetadata.title,
@@ -368,6 +645,7 @@ document.addEventListener("DOMContentLoaded", () => {
                   state: getState(metadata.title, rawMetadata.title),
                 },
                 {
+                  id: "meta-title",
                   key: t("metaTitle"),
                   value: metadata.metaTitle,
                   original: rawMetadata.metaTitle,
@@ -379,6 +657,7 @@ document.addEventListener("DOMContentLoaded", () => {
                   state: getState(metadata.metaTitle, rawMetadata.metaTitle),
                 },
                 {
+                  id: "meta-description",
                   key: t("metaDescription"),
                   value: metadata.metaDescription,
                   original: rawMetadata.metaDescription,
@@ -396,6 +675,7 @@ document.addEventListener("DOMContentLoaded", () => {
                   ),
                 },
                 {
+                  id: "canonical-url",
                   key: t("canonicalUrl"),
                   value: metadata.canonicalUrl,
                   original: rawMetadata.canonicalUrl,
@@ -412,6 +692,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
               const documentList = [
                 {
+                  id: "charset",
                   key: t("charset"),
                   value: metadata.charset,
                   original: rawMetadata.charset,
@@ -424,6 +705,7 @@ document.addEventListener("DOMContentLoaded", () => {
                   ),
                 },
                 {
+                  id: "viewport",
                   key: t("viewport"),
                   value: metadata.viewport,
                   original: rawMetadata.viewport,
@@ -435,6 +717,7 @@ document.addEventListener("DOMContentLoaded", () => {
                   state: getState(metadata.viewport, rawMetadata.viewport),
                 },
                 {
+                  id: "favicon",
                   key: t("favicon"),
                   value: metadata.favicon,
                   original: rawMetadata.favicon,
@@ -445,6 +728,7 @@ document.addEventListener("DOMContentLoaded", () => {
                   state: getState(metadata.favicon, rawMetadata.favicon),
                 },
                 {
+                  id: "theme-color",
                   key: t("themeColor"),
                   value: metadata.themeColor,
                   original: rawMetadata.themeColor,
@@ -461,6 +745,7 @@ document.addEventListener("DOMContentLoaded", () => {
               const originalHreflang = formatHreflang(rawMetadata.hreflang);
               const languageList = [
                 {
+                  id: "html-lang",
                   key: t("htmlLang"),
                   value: metadata.language,
                   original: rawMetadata.language,
@@ -470,6 +755,7 @@ document.addEventListener("DOMContentLoaded", () => {
                   state: getState(metadata.language, rawMetadata.language),
                 },
                 {
+                  id: "hreflang",
                   key: t("hreflang"),
                   value: currentHreflang,
                   original: originalHreflang,
@@ -483,13 +769,14 @@ document.addEventListener("DOMContentLoaded", () => {
               ];
 
               const ogList = [
-                ["og:title", "ogTitle"],
-                ["og:description", "ogDescription"],
-                ["og:type", "ogType"],
-                ["og:site_name", "ogSiteName"],
-                ["og:url", "ogUrl"],
-                ["og:image", "ogImage"],
-              ].map(([key, field]) => ({
+                ["og-title", "og:title", "ogTitle"],
+                ["og-description", "og:description", "ogDescription"],
+                ["og-type", "og:type", "ogType"],
+                ["og-site-name", "og:site_name", "ogSiteName"],
+                ["og-url", "og:url", "ogUrl"],
+                ["og-image", "og:image", "ogImage"],
+              ].map(([id, key, field]) => ({
+                id,
                 key,
                 value: metadata[field],
                 original: rawMetadata[field],
@@ -503,6 +790,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
               const etcList = [
                 {
+                  id: "robots",
                   key: "robots",
                   value: metadata.metaRobots,
                   original: rawMetadata.metaRobots,
@@ -514,6 +802,7 @@ document.addEventListener("DOMContentLoaded", () => {
                   state: getState(metadata.metaRobots, rawMetadata.metaRobots),
                 },
                 {
+                  id: "storebot-google",
                   key: "Storebot-Google",
                   value: metadata.metaStorebotGoogle,
                   original: rawMetadata.metaStorebotGoogle,
@@ -532,35 +821,28 @@ document.addEventListener("DOMContentLoaded", () => {
                 },
               ];
 
-              sections.push(
-                getSectionList(
-                  t("basic"),
-                  basicList,
-                  getSectionOptions("basic")
-                ),
-                getSectionList(
+              [
+                getVisibleSection("basic", t("basic"), basicList),
+                getVisibleSection(
+                  "languages",
                   t("languages"),
                   languageList,
-                  getSectionOptions("languages", true)
+                  true
                 ),
-                getSectionList(
-                  t("openGraph"),
-                  ogList,
-                  getSectionOptions("open-graph")
-                ),
-                getSectionList(
-                  t("etc"),
-                  etcList,
-                  getSectionOptions("etc", true)
-                )
-              );
+                getVisibleSection("open-graph", t("openGraph"), ogList),
+                getVisibleSection("etc", t("etc"), etcList, true),
+              ].forEach((section) => {
+                if (section) sections.push(section);
+              });
 
               if (documentInfo) {
-                documentInfo.innerHTML = getSectionList(
-                  t("document"),
-                  documentList,
-                  getSectionOptions("document", true)
-                );
+                documentInfo.innerHTML =
+                  getVisibleSection(
+                    "document",
+                    t("document"),
+                    documentList,
+                    true
+                  ) || "";
                 bindCodeToggles(documentInfo);
                 bindSectionToggles(documentInfo);
               }
@@ -576,15 +858,17 @@ document.addEventListener("DOMContentLoaded", () => {
             }
 
             if (httpInfo) {
-              sections.push(
-                getSectionList(
-                  t("httpResponse"),
-                  [
+              const httpSection = getVisibleSection(
+                "http-response",
+                t("httpResponse"),
+                [
                     {
+                      id: "status",
                       key: t("status"),
                       value: `${httpInfo.status} ${httpInfo.statusText}`.trim(),
                     },
                     {
+                      id: "final-url",
                       key: t("finalUrl"),
                       value: httpInfo.finalUrl,
                       code: httpInfo.finalUrl
@@ -592,10 +876,12 @@ document.addEventListener("DOMContentLoaded", () => {
                         : null,
                     },
                     {
+                      id: "redirected",
                       key: t("redirected"),
                       value: httpInfo.redirected ? t("yes") : t("no"),
                     },
                     {
+                      id: "content-type",
                       key: t("contentType"),
                       value: httpInfo.contentType,
                       code: httpInfo.contentType
@@ -603,30 +889,32 @@ document.addEventListener("DOMContentLoaded", () => {
                         : null,
                     },
                     {
+                      id: "x-robots-tag",
                       key: t("xRobotsTag"),
                       value: httpInfo.xRobotsTag,
                       code: httpInfo.xRobotsTag
                         ? escapeHtml(httpInfo.xRobotsTag)
                         : null,
                     },
-                  ],
-                  getSectionOptions("http-response", true)
-                )
+                ],
+                true
               );
+              if (httpSection) sections.push(httpSection);
             } else if (fetchError) {
-              sections.push(
-                getSectionList(
-                  t("httpResponse"),
-                  [
+              const errorSection = getVisibleSection(
+                "http-response",
+                t("httpResponse"),
+                [
                     {
+                      id: "error",
                       key: t("error"),
                       value: fetchError,
                       code: escapeHtml(fetchError),
                     },
-                  ],
-                  getSectionOptions("http-response", true)
-                )
+                ],
+                true
               );
+              if (errorSection) sections.push(errorSection);
             }
 
             groups.innerHTML = sections.join("");
@@ -656,6 +944,7 @@ if (languageToggle) {
 const stateHelpButton = document.getElementById("stateHelp");
 if (stateHelpButton) stateHelpButton.setAttribute("aria-label", t("stateHelp"));
 initializeStateHelpModal();
+initializeDisplaySettingsModal();
 
 const refreshButton = document.getElementById("refreshPage");
 if (refreshButton) refreshButton.textContent = t("reload");

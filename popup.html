@@ -300,6 +300,53 @@
         color: var(--muted);
         font-size: 12px;
       }
+      .settings-list {
+        display: grid;
+        gap: 10px;
+      }
+      .settings-section {
+        padding: 10px;
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        background: var(--card);
+      }
+      .settings-section-label,
+      .settings-item-label {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        cursor: pointer;
+      }
+      .settings-section-label {
+        font-weight: 600;
+      }
+      .settings-items {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 7px 12px;
+        margin: 10px 0 0 24px;
+        color: var(--muted);
+        font-size: 12px;
+      }
+      .modal-actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: 8px;
+        margin-top: 16px;
+      }
+      .modal-action {
+        padding: 7px 11px;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        background: transparent;
+        color: var(--text);
+        cursor: pointer;
+      }
+      .modal-action.primary {
+        border-color: var(--accent);
+        background: var(--accent);
+        color: white;
+      }
       .code-btn {
         background: transparent;
         border: 1px solid var(--border);
@@ -348,6 +395,7 @@
       <div class="header">
         <div class="title">Meta Checker</div>
         <div class="actions">
+          <button id="displaySettings" class="icon" aria-label="Display settings">⚙</button>
           <button id="stateHelp" class="icon">?</button>
           <button id="languageToggle" class="icon">한국어</button>
           <button id="refreshPage" class="icon">Reload</button>
@@ -373,6 +421,27 @@
         </div>
         <p id="stateHelpIntro" class="modal-intro"></p>
         <div id="stateHelpContent" class="state-help-list"></div>
+      </div>
+    </div>
+    <div
+      id="displaySettingsModal"
+      class="modal-backdrop"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="displaySettingsTitle"
+      hidden
+    >
+      <div class="help-modal">
+        <div class="modal-header">
+          <h2 id="displaySettingsTitle" class="modal-title"></h2>
+          <button type="button" class="modal-close">×</button>
+        </div>
+        <p id="displaySettingsIntro" class="modal-intro"></p>
+        <div id="displaySettingsContent" class="settings-list"></div>
+        <div class="modal-actions">
+          <button id="resetDisplaySettings" type="button" class="modal-action"></button>
+          <button id="saveDisplaySettings" type="button" class="modal-action primary"></button>
+        </div>
       </div>
     </div>
     <script src="popup.js" type="module"></script>
