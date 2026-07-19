@@ -1,0 +1,10 @@
+{
+  "extensionName": {
+    "message": "Meta Checker",
+    "description": "확장 프로그램 이름"
+  },
+  "extensionDescription": {
+    "message": "GEO와 SEO를 위한 메타데이터 메이트. 현재 DOM과 최초 HTML을 비교해 새로 추가되거나 변경·제거된 메타데이터를 확인하세요.",
+    "description": "Chrome Web Store에 표시되는 짧은 설명"
+  }
+}

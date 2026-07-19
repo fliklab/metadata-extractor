@@ -1,0 +1,10 @@
+{
+  "extensionName": {
+    "message": "Meta Checker",
+    "description": "El nombre de la extensión"
+  },
+  "extensionDescription": {
+    "message": "Tu aliado de metadatos para GEO y SEO. Compara el DOM con el HTML original y detecta metadatos nuevos, modificados o eliminados.",
+    "description": "Resumen breve para Chrome Web Store"
+  }
+}
