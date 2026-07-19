@@ -1,17 +1,32 @@
 function extractMetadataFromDOM() {
   return {
     title: document.title,
-    description: document.querySelector('meta[name="description"]')?.content,
-    metaTitle: document.querySelector("title")?.textContent,
+    metaTitle: document.querySelector('meta[name="title" i]')?.content,
     metaDescription: document.querySelector('meta[name="description"]')
       ?.content,
     metaRobots: document.querySelector('meta[name="robots"]')?.content,
-    metaStorebotGoogle: document.querySelector('meta[name="Storebot-Google"]')
+    metaStorebotGoogle: document.querySelector('meta[name="Storebot-Google" i]')
       ?.content,
     ogTitle: document.querySelector('meta[property="og:title"]')?.content,
+    ogDescription: document.querySelector('meta[property="og:description"]')
+      ?.content,
+    ogType: document.querySelector('meta[property="og:type"]')?.content,
+    ogSiteName: document.querySelector('meta[property="og:site_name"]')
+      ?.content,
     ogImage: document.querySelector('meta[property="og:image"]')?.content,
     ogUrl: document.querySelector('meta[property="og:url"]')?.content,
-    canonicalUrl: document.querySelector('link[rel="canonical"]')?.href,
+    canonicalUrl: document.querySelector('link[rel~="canonical" i]')?.href,
+    language: document.documentElement.getAttribute("lang"),
+    charset: document.characterSet || null,
+    viewport: document.querySelector('meta[name="viewport" i]')?.content,
+    favicon: document.querySelector('link[rel~="icon" i]')?.href,
+    themeColor: document.querySelector('meta[name="theme-color" i]')?.content,
+    hreflang: Array.from(
+      document.querySelectorAll('link[rel~="alternate" i][hreflang]')
+    ).map((link) => ({
+      language: link.getAttribute("hreflang"),
+      href: link.href,
+    })),
   };
 }
 
@@ -19,16 +34,18 @@ function extractJSONLD() {
   const scripts = document.querySelectorAll(
     'script[type="application/ld+json"]'
   );
-  return Array.from(scripts)
-    .map((script) => {
-      try {
-        return JSON.parse(script.innerText.trim());
-      } catch (e) {
-        console.error("Failed to parse JSON-LD: ", e);
-        return null;
-      }
-    })
-    .filter((data) => data !== null);
+  const data = [];
+  const errors = [];
+
+  Array.from(scripts).forEach((script, index) => {
+    try {
+      data.push(JSON.parse(script.textContent.trim()));
+    } catch (error) {
+      errors.push(`Block ${index + 1}: ${error.message}`);
+    }
+  });
+
+  return { data, errors, total: scripts.length };
 }
 
 // Wait briefly for canonical to be injected by SPA head managers (e.g., Helmet)
@@ -55,8 +72,13 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       if (!metadata.canonicalUrl) {
         metadata.canonicalUrl = await waitForCanonical();
       }
-      const jsonldData = extractJSONLD();
-      sendResponse({ metadata, jsonldData });
+      const jsonld = extractJSONLD();
+      sendResponse({
+        metadata,
+        jsonldData: jsonld.data,
+        jsonldErrors: jsonld.errors,
+        jsonldTotal: jsonld.total,
+      });
     })();
     // Keep the message channel open for the async response
     return true;

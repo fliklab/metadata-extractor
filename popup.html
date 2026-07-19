@@ -1,6 +1,7 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
   <head>
+    <meta charset="UTF-8" />
     <title>Meta Checker</title>
     <style>
       :root {
@@ -67,11 +68,20 @@
         color: var(--text);
         border-color: #2b3242;
       }
+      .language-select {
+        max-width: 118px;
+        padding: 6px 8px;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        background: var(--bg);
+        color: var(--text);
+        cursor: pointer;
+      }
       .section {
         background: var(--card);
         border: 1px solid var(--border);
         border-radius: 12px;
-        overflow: hidden;
+        overflow: visible;
       }
       .section + .section {
         margin-top: 6px;
@@ -80,8 +90,46 @@
         display: flex;
         align-items: center;
         justify-content: space-between;
-        padding: 10px 12px;
+        min-height: 39px;
         border-bottom: 1px solid var(--border);
+      }
+      .section-header > .tools {
+        padding-right: 12px;
+      }
+      .section.collapsed .section-header {
+        border-bottom-color: transparent;
+      }
+      .section-toggle {
+        appearance: none;
+        display: flex;
+        align-items: center;
+        justify-content: flex-start;
+        gap: 8px;
+        flex: 1;
+        min-width: 0;
+        padding: 10px 12px;
+        border: 0;
+        background: transparent;
+        color: inherit;
+        cursor: pointer;
+        text-align: left;
+      }
+      .section-chevron {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 12px;
+        color: var(--muted);
+        font-size: 18px;
+        line-height: 1;
+        transform: rotate(90deg);
+        transition: transform 0.15s ease;
+      }
+      .section.collapsed .section-chevron {
+        transform: rotate(0deg);
+      }
+      .section.collapsed .list {
+        display: none;
       }
       .section-title {
         font-weight: 600;
@@ -95,6 +143,11 @@
         display: grid;
         grid-template-columns: 1fr;
         gap: 6px;
+      }
+      .empty-state {
+        padding: 12px;
+        color: var(--muted);
+        font-size: 12px;
       }
       .row {
         display: grid;
@@ -131,7 +184,21 @@
         word-break: break-word;
         overflow-wrap: anywhere;
       }
+      .value-text {
+        white-space: pre-wrap;
+      }
+      .row.has-code:not(.expanded) .value-text {
+        display: -webkit-box;
+        -webkit-box-orient: vertical;
+        -webkit-line-clamp: 3;
+        overflow: hidden;
+      }
+      .row.expanded .value-text {
+        display: block;
+        overflow: visible;
+      }
       .chip {
+        position: relative;
         font-size: 11px;
         color: var(--ok);
         border: 1px solid rgba(16, 185, 129, 0.25);
@@ -147,20 +214,153 @@
           "Noto Sans KR", "Malgun Gothic", "Segoe UI", Roboto, Helvetica, Arial,
           sans-serif;
       }
+      button.chip {
+        cursor: pointer;
+      }
       .chip.warn {
         color: var(--warn);
         border-color: rgba(245, 158, 11, 0.35);
         background: rgba(245, 158, 11, 0.08);
       }
       .chip.info {
-        color: var(--accent);
-        border-color: rgba(79, 70, 229, 0.35);
-        background: rgba(79, 70, 229, 0.08);
+        color: var(--info);
+        border-color: rgba(96, 165, 250, 0.45);
+        background: rgba(96, 165, 250, 0.12);
       }
       .chip.danger {
         color: var(--danger);
         border-color: rgba(239, 68, 68, 0.35);
         background: rgba(239, 68, 68, 0.08);
+      }
+      .chip-help {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 14px;
+        height: 14px;
+        margin-left: 4px;
+        border: 1px solid currentColor;
+        border-radius: 50%;
+        font-size: 9px;
+        font-weight: 700;
+        cursor: inherit;
+        opacity: 0.8;
+        pointer-events: none;
+      }
+      .modal-backdrop {
+        position: fixed;
+        z-index: 100;
+        inset: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+        background: rgba(0, 0, 0, 0.68);
+      }
+      .modal-backdrop[hidden] {
+        display: none;
+      }
+      .help-modal {
+        width: min(420px, 100%);
+        max-height: calc(100vh - 40px);
+        overflow: auto;
+        padding: 18px;
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        background: #181b23;
+        color: var(--text);
+        box-shadow: 0 18px 50px rgba(0, 0, 0, 0.55);
+      }
+      .modal-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+      }
+      .modal-title {
+        margin: 0;
+        font-size: 16px;
+      }
+      .modal-close {
+        border: 0;
+        background: transparent;
+        color: var(--muted);
+        font-size: 22px;
+        cursor: pointer;
+      }
+      .modal-intro {
+        margin: 8px 0 16px;
+        color: var(--muted);
+        font-size: 12px;
+      }
+      .state-help-list {
+        display: grid;
+        gap: 8px;
+      }
+      .state-help-row {
+        display: grid;
+        grid-template-columns: 90px 1fr;
+        align-items: start;
+        gap: 10px;
+        padding: 10px;
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        background: var(--card);
+      }
+      .state-help-row .chip {
+        justify-self: start;
+      }
+      .state-help-row p {
+        margin: 0;
+        color: var(--muted);
+        font-size: 12px;
+      }
+      .settings-list {
+        display: grid;
+        gap: 10px;
+      }
+      .settings-section {
+        padding: 10px;
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        background: var(--card);
+      }
+      .settings-section-label,
+      .settings-item-label {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        cursor: pointer;
+      }
+      .settings-section-label {
+        font-weight: 600;
+      }
+      .settings-items {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 7px 12px;
+        margin: 10px 0 0 24px;
+        color: var(--muted);
+        font-size: 12px;
+      }
+      .modal-actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: 8px;
+        margin-top: 16px;
+      }
+      .modal-action {
+        padding: 7px 11px;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        background: transparent;
+        color: var(--text);
+        cursor: pointer;
+      }
+      .modal-action.primary {
+        border-color: var(--accent);
+        background: var(--accent);
+        color: white;
       }
       .code-btn {
         background: transparent;
@@ -210,12 +410,60 @@
       <div class="header">
         <div class="title">Meta Checker</div>
         <div class="actions">
+          <button id="displaySettings" class="icon" aria-label="Display settings">⚙</button>
+          <button id="stateHelp" class="icon">?</button>
+          <select id="languageSelect" class="language-select" aria-label="Language">
+            <option value="en">English</option>
+            <option value="ko">한국어</option>
+            <option value="ja">日本語</option>
+            <option value="es">Español</option>
+            <option value="pt_BR">Português (Brasil)</option>
+          </select>
           <button id="refreshPage" class="icon">Reload</button>
         </div>
       </div>
       <div id="activeUrl" class="url"></div>
       <div id="groups"></div>
       <div id="jsonld" class="section"></div>
+      <div id="documentInfo"></div>
+    </div>
+    <div
+      id="stateHelpModal"
+      class="modal-backdrop"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="stateHelpTitle"
+      hidden
+    >
+      <div class="help-modal">
+        <div class="modal-header">
+          <h2 id="stateHelpTitle" class="modal-title"></h2>
+          <button type="button" class="modal-close">&times;</button>
+        </div>
+        <p id="stateHelpIntro" class="modal-intro"></p>
+        <div id="stateHelpContent" class="state-help-list"></div>
+      </div>
+    </div>
+    <div
+      id="displaySettingsModal"
+      class="modal-backdrop"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="displaySettingsTitle"
+      hidden
+    >
+      <div class="help-modal">
+        <div class="modal-header">
+          <h2 id="displaySettingsTitle" class="modal-title"></h2>
+          <button type="button" class="modal-close">&times;</button>
+        </div>
+        <p id="displaySettingsIntro" class="modal-intro"></p>
+        <div id="displaySettingsContent" class="settings-list"></div>
+        <div class="modal-actions">
+          <button id="resetDisplaySettings" type="button" class="modal-action"></button>
+          <button id="saveDisplaySettings" type="button" class="modal-action primary"></button>
+        </div>
+      </div>
     </div>
     <script src="popup.js" type="module"></script>
   </body>
