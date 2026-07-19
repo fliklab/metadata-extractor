@@ -28,6 +28,16 @@ Puedes contraer secciones y elegir secciones completas o campos individuales en
 la configuración de visualización. La interfaz admite inglés, coreano, japonés,
 español y portugués de Brasil.
 
+## Flujo de trabajo para GEO y SEO
+
+- Comprueba qué metadatos contiene el HTML entregado por el servidor.
+- Detecta valores modificados en tiempo de ejecución por frameworks, scripts o gestores de etiquetas.
+- Revisa señales canonical, de idioma, robots, Open Graph, HTTP y JSON-LD en una sola pasada.
+- Investiga diferencias entre la respuesta original y la página que ven usuarios o rastreadores compatibles.
+
+Meta Checker ofrece una inspección técnica de metadatos. No predice ni garantiza
+posiciones en buscadores ni visibilidad en respuestas generadas por IA.
+
 ## Estados de metadatos
 
 | Estado | Significado |
@@ -64,4 +74,4 @@ el nuevo script de contenido en las pestañas abiertas antes de cargar la extens
 
 ## Versión
 
-Versión actual: `1.1.0`
+Versión actual: `1.1.1`

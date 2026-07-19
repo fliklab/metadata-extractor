@@ -28,6 +28,16 @@ You can collapse sections and use Display settings to choose entire sections or
 individual fields. The popup interface supports English, Korean, Japanese,
 Spanish, and Brazilian Portuguese.
 
+## GEO and SEO workflow
+
+- Verify which metadata is present in the server-delivered HTML.
+- Detect metadata changed at runtime by frameworks, scripts, or tag managers.
+- Review canonical, language, robots, Open Graph, HTTP, and JSON-LD signals in one pass.
+- Investigate gaps between the original response and the page users or capable crawlers see.
+
+Meta Checker provides technical metadata inspection. It does not predict or
+guarantee search rankings or visibility in AI-generated answers.
+
 ## Metadata states
 
 | State | Meaning |
@@ -64,4 +74,4 @@ content script into tabs that were open before the extension was loaded.
 
 ## Version
 
-Current release: `1.1.0`
+Current release: `1.1.1`
