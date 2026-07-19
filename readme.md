@@ -1,26 +1,45 @@
-## Meta Checker
+# Meta Checker
 
+Meta Checker is a Chrome extension that inspects webpage metadata and compares
+the live DOM with the original HTML response. It helps you quickly identify
+metadata that is unchanged, newly added, modified, or removed.
 
-### 프로그램 설치
+[Chrome Web Store에서 설치하기](https://chromewebstore.google.com/detail/metadata-extractor/pdikiboojnhoacoknfdpndeddocnbmop)
 
-이 프로그램은 크롬에서 사용가능한 확장 프로그램으로 [크롬 웹스토어](https://chromewebstore.google.com/detail/metadata-extractor/pdikiboojnhoacoknfdpndeddocnbmop "Meta Checker")에서 설치하여 사용할 수 있습니다.
+![Meta Checker metadata comparison](docs/images/meta-checker-overview.png)
 
+![Meta Checker state guide](docs/images/meta-checker-state-guide.png)
 
-### 간단한 사용방법 안내
+## 주요 기능
 
-<img alt="예시 이미지" src="https://github.com/user-attachments/assets/6ef1f077-2411-409f-9450-b79e888db326" width=200px/>
+- 현재 DOM과 최초 HTML 응답의 메타데이터 비교
+- `Same`, `New`, `Changed`, `Removed` 상태 표시
+- `<title>`과 `<meta name="title">`을 별도 항목으로 확인
+- 기본 메타 태그, Open Graph, robots 및 다국어 정보 확인
+- HTTP 응답 상태와 JSON-LD 요약 확인
+- 섹션과 개별 항목의 표시 여부 설정
+- English, 한국어, 日本語, Español, Português (Brasil) 지원
 
-익스텐션이 켜져있는 상태로 사이트에 접속하면 메타 태그가 표시됩니다.
+## 사용 방법
 
-이 프로그램의 가장 큰 특징은 페이지 로딩 이후 값이 바뀌었다면 바뀌기 전 값이 주황색으로 표시됩니다.
-검색 봇이 자바스크립트를 실행하지 않는다면, 주황색 값을 참고하게 되므로 생각한대로 SEO가 안될 가능성이 큽니다.
-이 프로그램은 자바스크립트가 실행되기 전후의 메타태그를 비교하여 정확한 SEO를 할 수 있도록 도와줍니다.
+1. 확인하려는 웹페이지를 엽니다.
+2. 브라우저 도구 모음에서 Meta Checker를 실행합니다.
+3. 메타데이터와 상태 칩을 확인합니다.
+4. 상태 칩이나 우측 상단의 `?` 버튼을 누르면 상태 설명을 볼 수 있습니다.
+5. 설정 버튼을 누르면 화면에 표시할 섹션과 항목을 선택할 수 있습니다.
 
-### 직접 설치 
+확장 프로그램을 설치하거나 로컬에서 다시 로드한 직후 이미 열려 있던
+페이지라면, 해당 페이지를 한 번 새로고침한 후 Meta Checker를 실행하세요.
 
-1. 소스코드 다운로드(Zip파일인 경우, 한 폴더 내에 압축 해제)
-2. 크롬 브라우저의 주소창에 `chrome://extensions` 입력하여 접속
-3. 우측상단의 "개발자모드" On
-4. "업츅해제된 확장프로그램을 로드합니다." 선택
-5. 해당 소스코드가 포함된 폴더를 선택하면 설치가 됩니다.
-6. 브라우저 우측 상단의 퍼즐 모양 아이콘을 누르면 extension 리스트를 볼 수 있습니다.
+## 로컬 설치
+
+1. 저장소를 다운로드하거나 복제합니다.
+2. Chrome 주소창에서 `chrome://extensions`를 엽니다.
+3. 우측 상단의 **개발자 모드**를 켭니다.
+4. **압축해제된 확장 프로그램을 로드합니다**를 선택합니다.
+5. `manifest.json`이 있는 저장소 루트 폴더를 선택합니다.
+6. 브라우저 도구 모음의 확장 프로그램 목록에서 Meta Checker를 고정합니다.
+
+## Version
+
+Current release: `1.1.0`
