@@ -59,9 +59,9 @@ derecha para abrir la guía de estados.
 5. Elige las secciones y los campos visibles en la configuración.
 6. Selecciona el idioma de la interfaz en el menú de idiomas.
 
-Después de instalar o volver a cargar la extensión sin empaquetar, actualiza las
-páginas que ya estaban abiertas antes de iniciar Meta Checker. Chrome no inyecta
-el nuevo script de contenido en las pestañas abiertas antes de cargar la extensión.
+En páginas web normales, Meta Checker vuelve a conectar automáticamente su lector
+de metadatos cuando la pestaña ya estaba abierta antes de instalar o recargar la
+extensión. No se pueden inspeccionar páginas protegidas como `chrome://extensions`.
 
 ## Instalación local
 

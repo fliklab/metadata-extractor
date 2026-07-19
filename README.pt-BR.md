@@ -59,9 +59,9 @@ abrir o guia de estados.
 5. Escolha as seções e os campos visíveis nas configurações.
 6. Selecione o idioma da interface no menu de idiomas.
 
-Depois de instalar ou recarregar a extensão descompactada, atualize as páginas que
-já estavam abertas antes de iniciar o Meta Checker. O Chrome não injeta o novo
-script de conteúdo nas abas abertas antes do carregamento da extensão.
+Em páginas comuns, o Meta Checker reconecta automaticamente o leitor de metadados
+quando a aba já estava aberta antes da instalação ou recarga da extensão. Páginas
+protegidas pelo Chrome, como `chrome://extensions`, não podem ser inspecionadas.
 
 ## Instalação local
 

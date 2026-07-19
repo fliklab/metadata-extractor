@@ -59,9 +59,9 @@ state guide.
 5. Use Display settings to select the sections and fields you want to see.
 6. Choose an interface language from the language menu.
 
-After installing or reloading the unpacked extension, refresh any webpage that
-was already open before launching Meta Checker. Chrome does not inject the new
-content script into tabs that were open before the extension was loaded.
+On regular webpages, Meta Checker automatically reconnects its metadata reader
+when a tab was already open before the extension was installed or reloaded.
+Chrome-protected pages such as `chrome://extensions` cannot be inspected.
 
 ## Install locally
 
