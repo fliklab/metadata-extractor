@@ -805,6 +805,35 @@ function renderJsonLd({ jsonldData, jsonldErrors, jsonldTotal }) {
   bindSectionToggles(container);
 }
 
+function requestMetadataFromTab(tabId) {
+  return new Promise((resolve) => {
+    chrome.tabs.sendMessage(
+      tabId,
+      { action: "getCurrentMetadata" },
+      (data) => {
+        const messageError = chrome.runtime.lastError;
+        resolve(messageError ? null : data || null);
+      }
+    );
+  });
+}
+
+async function loadMetadataFromTab(tabId) {
+  const currentData = await requestMetadataFromTab(tabId);
+  if (currentData) return currentData;
+
+  try {
+    await chrome.scripting.executeScript({
+      target: { tabId },
+      files: ["content.js"],
+    });
+  } catch {
+    return null;
+  }
+
+  return requestMetadataFromTab(tabId);
+}
+
 document.addEventListener("DOMContentLoaded", () => {
   chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
     const activeTab = tabs[0];
@@ -832,11 +861,7 @@ document.addEventListener("DOMContentLoaded", () => {
         const httpInfo = response?.httpInfo;
         const fetchError = response?.error;
 
-        chrome.tabs.sendMessage(
-          activeTab.id,
-          { action: "getCurrentMetadata" },
-          (data) => {
-            void chrome.runtime.lastError;
+        loadMetadataFromTab(activeTab.id).then((data) => {
             const metadata = data?.metadata;
             const sections = [];
             const documentInfo = document.getElementById("documentInfo");
@@ -1132,8 +1157,7 @@ document.addEventListener("DOMContentLoaded", () => {
               jsonldErrors: data?.jsonldErrors,
               jsonldTotal: data?.jsonldTotal,
             });
-          }
-        );
+          });
       }
     );
   });

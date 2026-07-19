@@ -4,7 +4,7 @@
   "version": "1.1.1",
   "description": "__MSG_extensionDescription__",
   "default_locale": "en",
-  "permissions": ["activeTab"],
+  "permissions": ["activeTab", "scripting"],
   "background": {
     "type": "module",
     "service_worker": "background.js"
