@@ -1,0 +1,463 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Meta Checker UI Preview</title>
+    <style>
+      :root {
+        color-scheme: dark;
+        --canvas: #07080b;
+        --surface: #12141a;
+        --surface-raised: #191c24;
+        --border: #252b39;
+        --text: #e6e8ef;
+        --muted: #9aa3b2;
+        --accent: #4f46e5;
+        --focus: #60a5fa;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        min-width: 100%;
+        min-height: 100%;
+      }
+      body {
+        margin: 0;
+        background:
+          radial-gradient(circle at 50% 20%, rgba(79, 70, 229, 0.13), transparent 34%),
+          var(--canvas);
+        color: var(--text);
+        font: 14px/1.5 -apple-system, BlinkMacSystemFont, "Inter", "Apple SD Gothic Neo",
+          "Noto Sans KR", "Segoe UI", sans-serif;
+      }
+      body::before {
+        content: "";
+        position: fixed;
+        inset: 0;
+        opacity: 0.18;
+        background-image:
+          linear-gradient(rgba(255, 255, 255, 0.04) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(255, 255, 255, 0.04) 1px, transparent 1px);
+        background-size: 24px 24px;
+        pointer-events: none;
+      }
+      .preview-stage {
+        position: relative;
+        z-index: 1;
+        display: grid;
+        place-items: start center;
+        min-height: 100vh;
+        padding: 32px 24px 116px;
+      }
+      .preview-window {
+        position: relative;
+        width: 542px;
+        min-height: 722px;
+        overflow: hidden;
+        border: 1px solid #313848;
+        border-radius: 14px;
+        background: #0b0c0f;
+        box-shadow:
+          0 28px 80px rgba(0, 0, 0, 0.52),
+          0 0 0 1px rgba(255, 255, 255, 0.025);
+      }
+      .preview-frame {
+        display: block;
+        width: 540px;
+        height: 720px;
+        border: 0;
+        background: #0b0c0f;
+      }
+      .viewport-label {
+        position: absolute;
+        top: 12px;
+        left: calc(50% + 283px);
+        color: #687386;
+        font-size: 11px;
+        font-variant-numeric: tabular-nums;
+        white-space: nowrap;
+      }
+      .scenario-trigger {
+        position: fixed;
+        z-index: 20;
+        right: 24px;
+        bottom: 24px;
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        min-height: 48px;
+        max-width: min(320px, calc(100vw - 48px));
+        padding: 0 16px;
+        border: 1px solid #343b4d;
+        border-radius: 999px;
+        background: rgba(25, 28, 36, 0.96);
+        color: var(--text);
+        box-shadow: 0 14px 38px rgba(0, 0, 0, 0.42);
+        font: inherit;
+        cursor: pointer;
+        backdrop-filter: blur(12px);
+        transition: border-color 0.18s ease, background-color 0.18s ease;
+      }
+      .scenario-trigger:hover {
+        border-color: #4b556b;
+        background: #1d2029;
+      }
+      .scenario-trigger:focus-visible,
+      .scenario-option:focus-visible,
+      .locale-select:focus-visible,
+      .panel-close:focus-visible {
+        outline: 2px solid var(--focus);
+        outline-offset: 2px;
+      }
+      .scenario-dot {
+        width: 8px;
+        height: 8px;
+        flex: 0 0 auto;
+        border-radius: 50%;
+        background: #818cf8;
+        box-shadow: 0 0 0 4px rgba(129, 140, 248, 0.12);
+      }
+      .scenario-trigger-copy {
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+      .scenario-trigger-label {
+        color: var(--muted);
+        font-size: 11px;
+      }
+      .scenario-trigger-value {
+        margin-left: 4px;
+        font-weight: 600;
+      }
+      .scenario-chevron {
+        width: 16px;
+        height: 16px;
+        flex: 0 0 auto;
+        transition: transform 0.18s ease;
+      }
+      .scenario-trigger[aria-expanded="true"] .scenario-chevron {
+        transform: rotate(180deg);
+      }
+      .scenario-panel {
+        position: fixed;
+        z-index: 19;
+        right: 24px;
+        bottom: 84px;
+        width: min(360px, calc(100vw - 48px));
+        max-height: min(610px, calc(100vh - 116px));
+        overflow: auto;
+        padding: 16px;
+        border: 1px solid #343b4d;
+        border-radius: 16px;
+        background: rgba(18, 20, 26, 0.98);
+        box-shadow: 0 24px 64px rgba(0, 0, 0, 0.52);
+        backdrop-filter: blur(16px);
+      }
+      .scenario-panel[hidden] {
+        display: none;
+      }
+      .panel-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        margin-bottom: 12px;
+      }
+      .panel-title {
+        margin: 0;
+        font-size: 15px;
+      }
+      .panel-close {
+        display: inline-grid;
+        place-items: center;
+        width: 40px;
+        height: 40px;
+        border: 0;
+        border-radius: 10px;
+        background: transparent;
+        color: var(--muted);
+        cursor: pointer;
+      }
+      .panel-close:hover {
+        background: rgba(255, 255, 255, 0.04);
+        color: var(--text);
+      }
+      .panel-close svg {
+        width: 18px;
+        height: 18px;
+      }
+      .scenario-list {
+        display: grid;
+        gap: 6px;
+      }
+      .scenario-option {
+        display: grid;
+        grid-template-columns: 18px minmax(0, 1fr);
+        gap: 10px;
+        width: 100%;
+        min-height: 56px;
+        padding: 10px;
+        border: 1px solid transparent;
+        border-radius: 10px;
+        background: transparent;
+        color: inherit;
+        text-align: left;
+        cursor: pointer;
+      }
+      .scenario-option:hover {
+        background: rgba(255, 255, 255, 0.035);
+      }
+      .scenario-option[aria-current="true"] {
+        border-color: rgba(99, 102, 241, 0.48);
+        background: rgba(79, 70, 229, 0.12);
+      }
+      .option-indicator {
+        width: 16px;
+        height: 16px;
+        margin-top: 2px;
+        border: 1px solid #4b556b;
+        border-radius: 50%;
+      }
+      .scenario-option[aria-current="true"] .option-indicator {
+        border: 5px solid #818cf8;
+      }
+      .option-title {
+        display: block;
+        font-weight: 600;
+      }
+      .option-description {
+        display: block;
+        margin-top: 2px;
+        color: var(--muted);
+        font-size: 12px;
+        line-height: 1.4;
+      }
+      .locale-field {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        align-items: center;
+        gap: 12px;
+        margin-top: 14px;
+        padding-top: 14px;
+        border-top: 1px solid var(--border);
+      }
+      .locale-label {
+        color: var(--muted);
+        font-size: 12px;
+      }
+      .locale-select {
+        min-height: 40px;
+        padding: 0 10px;
+        border: 1px solid var(--border);
+        border-radius: 9px;
+        background: #0d0f14;
+        color: var(--text);
+        font: inherit;
+        cursor: pointer;
+      }
+      @media (max-width: 720px) {
+        .preview-stage {
+          place-items: start;
+          overflow: auto;
+          padding: 16px 16px 104px;
+        }
+        .viewport-label {
+          display: none;
+        }
+        .scenario-trigger,
+        .scenario-panel {
+          right: 16px;
+        }
+        .scenario-trigger {
+          bottom: 16px;
+        }
+        .scenario-panel {
+          bottom: 76px;
+        }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .scenario-trigger,
+        .scenario-chevron {
+          transition: none;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="preview-stage">
+      <div class="preview-window">
+        <iframe
+          id="previewFrame"
+          class="preview-frame"
+          title="Meta Checker popup preview"
+        ></iframe>
+      </div>
+      <span class="viewport-label" aria-hidden="true">540 × 720</span>
+    </main>
+
+    <section
+      id="scenarioPanel"
+      class="scenario-panel"
+      aria-labelledby="scenarioPanelTitle"
+      hidden
+    >
+      <div class="panel-header">
+        <h1 id="scenarioPanelTitle" class="panel-title">Preview scenario</h1>
+        <button id="panelClose" class="panel-close" type="button" aria-label="닫기">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path
+              d="M6 6l12 12M18 6L6 18"
+              fill="none"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-width="1.8"
+            />
+          </svg>
+        </button>
+      </div>
+      <div id="scenarioList" class="scenario-list"></div>
+      <label class="locale-field">
+        <span class="locale-label">팝업 언어</span>
+        <select id="previewLocale" class="locale-select">
+          <option value="ko">한국어</option>
+          <option value="en">English</option>
+          <option value="ja">日本語</option>
+          <option value="es">Español</option>
+          <option value="pt_BR">Português</option>
+        </select>
+      </label>
+    </section>
+
+    <button
+      id="scenarioTrigger"
+      class="scenario-trigger"
+      type="button"
+      aria-controls="scenarioPanel"
+      aria-expanded="false"
+    >
+      <span class="scenario-dot" aria-hidden="true"></span>
+      <span class="scenario-trigger-copy">
+        <span class="scenario-trigger-label">SCENARIO</span>
+        <span id="scenarioTriggerValue" class="scenario-trigger-value"></span>
+      </span>
+      <svg class="scenario-chevron" viewBox="0 0 24 24" aria-hidden="true">
+        <path
+          d="m7 10 5 5 5-5"
+          fill="none"
+          stroke="currentColor"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="1.8"
+        />
+      </svg>
+    </button>
+
+    <script type="module">
+      import {
+        defaultPreviewScenario,
+        previewScenarios,
+      } from "./scenarios.js";
+
+      const frame = document.getElementById("previewFrame");
+      const panel = document.getElementById("scenarioPanel");
+      const trigger = document.getElementById("scenarioTrigger");
+      const triggerValue = document.getElementById("scenarioTriggerValue");
+      const closeButton = document.getElementById("panelClose");
+      const scenarioList = document.getElementById("scenarioList");
+      const localeSelect = document.getElementById("previewLocale");
+      const params = new URLSearchParams(window.location.search);
+      let activeScenario = previewScenarios[params.get("scenario")]
+        ? params.get("scenario")
+        : defaultPreviewScenario;
+      let activeLocale = params.get("locale") || "ko";
+
+      function updatePreview() {
+        const scenario = previewScenarios[activeScenario];
+        const nextParams = new URLSearchParams({
+          scenario: activeScenario,
+          locale: activeLocale,
+        });
+        window.history.replaceState(null, "", `?${nextParams}`);
+        frame.src = `../popup.html?preview=${encodeURIComponent(
+          activeScenario
+        )}&locale=${encodeURIComponent(activeLocale)}`;
+        triggerValue.textContent = scenario.label;
+        localeSelect.value = activeLocale;
+        scenarioList.querySelectorAll(".scenario-option").forEach((button) => {
+          button.setAttribute(
+            "aria-current",
+            String(button.dataset.scenario === activeScenario)
+          );
+        });
+      }
+
+      function setPanelOpen(open) {
+        panel.hidden = !open;
+        trigger.setAttribute("aria-expanded", String(open));
+        if (open) {
+          panel
+            .querySelector('[aria-current="true"]')
+            ?.focus({ preventScroll: true });
+        } else if (document.activeElement !== trigger) {
+          trigger.focus({ preventScroll: true });
+        }
+      }
+
+      scenarioList.innerHTML = Object.entries(previewScenarios)
+        .map(
+          ([id, scenario]) => `
+            <button
+              class="scenario-option"
+              type="button"
+              data-scenario="${id}"
+              aria-current="${String(id === activeScenario)}"
+            >
+              <span class="option-indicator" aria-hidden="true"></span>
+              <span>
+                <span class="option-title">${scenario.label}</span>
+                <span class="option-description">${scenario.description}</span>
+              </span>
+            </button>
+          `
+        )
+        .join("");
+
+      trigger.addEventListener("click", () => {
+        setPanelOpen(trigger.getAttribute("aria-expanded") !== "true");
+      });
+      closeButton.addEventListener("click", () => setPanelOpen(false));
+      scenarioList.addEventListener("click", (event) => {
+        const option = event.target.closest(".scenario-option");
+        if (!option) return;
+        activeScenario = option.dataset.scenario;
+        updatePreview();
+        setPanelOpen(false);
+      });
+      localeSelect.addEventListener("change", () => {
+        activeLocale = localeSelect.value;
+        updatePreview();
+      });
+      document.addEventListener("click", (event) => {
+        if (
+          !panel.hidden &&
+          !panel.contains(event.target) &&
+          !trigger.contains(event.target)
+        ) {
+          setPanelOpen(false);
+        }
+      });
+      document.addEventListener("keydown", (event) => {
+        if (event.key === "Escape" && !panel.hidden) {
+          setPanelOpen(false);
+        }
+      });
+
+      updatePreview();
+    </script>
+  </body>
+</html>

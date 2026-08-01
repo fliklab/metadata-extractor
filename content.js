@@ -27,6 +27,13 @@ function extractMetadataFromDOM() {
       language: link.getAttribute("hreflang"),
       href: link.href,
     })),
+    headings: Array.from(
+      document.querySelectorAll("h1, h2, h3, h4, h5, h6")
+    ).map((heading, index) => ({
+      index,
+      level: Number(heading.tagName.slice(1)),
+      text: heading.textContent.trim(),
+    })),
   };
 }
 
@@ -82,5 +89,24 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     })();
     // Keep the message channel open for the async response
     return true;
+  }
+
+  if (message.action === "scrollToHeading") {
+    const heading = document.querySelectorAll("h1, h2, h3, h4, h5, h6")[
+      message.index
+    ];
+    if (!heading) {
+      sendResponse({ success: false });
+      return;
+    }
+
+    const reduceMotion = window.matchMedia(
+      "(prefers-reduced-motion: reduce)"
+    ).matches;
+    heading.scrollIntoView({
+      behavior: reduceMotion ? "auto" : "smooth",
+      block: "center",
+    });
+    sendResponse({ success: true });
   }
 });

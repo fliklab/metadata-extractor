@@ -10,6 +10,14 @@ import getState from "./core/getState.js";
 import { getSectionList } from "./ui/section.js";
 import { getStateHelp } from "./ui/chip.js";
 
+const previewScenario = new URLSearchParams(window.location.search).get(
+  "preview"
+);
+if (previewScenario && !globalThis.chrome?.tabs) {
+  const { installPreviewChrome } = await import("./preview/chrome-mock.js");
+  installPreviewChrome(previewScenario);
+}
+
 const LANGUAGE_STORAGE_KEY = "meta-checker-language";
 const DISPLAY_STORAGE_KEY = "meta-checker-visible-items";
 const supportedLocales = new Set(["en", "ko", "ja", "es", "pt_BR"]);
@@ -29,6 +37,11 @@ const messages = {
     etc: "Etc",
     httpResponse: "HTTP Response",
     jsonLdSummary: "JSON-LD Summary",
+    headings: "Headings",
+    headingOutline: "Heading outline",
+    noHeadings: "No headings found",
+    untitledHeading: "Untitled heading",
+    jumpToHeading: "Jump to",
     title: "title",
     metaTitle: "meta title",
     metaDescription: "meta description",
@@ -84,6 +97,11 @@ const messages = {
     etc: "기타",
     httpResponse: "HTTP 응답",
     jsonLdSummary: "JSON-LD 요약",
+    headings: "제목 구조",
+    headingOutline: "제목 목차",
+    noHeadings: "제목 태그가 없습니다",
+    untitledHeading: "내용 없는 제목",
+    jumpToHeading: "이동",
     title: "제목",
     metaTitle: "메타 제목",
     metaDescription: "메타 설명",
@@ -139,6 +157,11 @@ const messages = {
     etc: "その他",
     httpResponse: "HTTP レスポンス",
     jsonLdSummary: "JSON-LD サマリー",
+    headings: "見出し",
+    headingOutline: "見出し構成",
+    noHeadings: "見出しがありません",
+    untitledHeading: "無題の見出し",
+    jumpToHeading: "移動",
     title: "タイトル",
     metaTitle: "メタタイトル",
     metaDescription: "メタディスクリプション",
@@ -194,6 +217,11 @@ const messages = {
     etc: "Otros",
     httpResponse: "Respuesta HTTP",
     jsonLdSummary: "Resumen JSON-LD",
+    headings: "Encabezados",
+    headingOutline: "Esquema de encabezados",
+    noHeadings: "No se encontraron encabezados",
+    untitledHeading: "Encabezado sin título",
+    jumpToHeading: "Ir a",
     title: "título",
     metaTitle: "meta título",
     metaDescription: "meta descripción",
@@ -249,6 +277,11 @@ const messages = {
     etc: "Outros",
     httpResponse: "Resposta HTTP",
     jsonLdSummary: "Resumo JSON-LD",
+    headings: "Títulos",
+    headingOutline: "Estrutura de títulos",
+    noHeadings: "Nenhum título encontrado",
+    untitledHeading: "Título sem texto",
+    jumpToHeading: "Ir para",
     title: "título",
     metaTitle: "meta título",
     metaDescription: "meta descrição",
@@ -302,6 +335,7 @@ const defaultVisibleItems = new Set([
   "basic.title",
   "basic.meta-description",
   "basic.canonical-url",
+  "headings.outline",
   "open-graph.og-title",
   "open-graph.og-description",
   "open-graph.og-url",
@@ -327,6 +361,11 @@ function getDisplaySections() {
         ["meta-description", t("metaDescription")],
         ["canonical-url", t("canonicalUrl")],
       ],
+    },
+    {
+      id: "headings",
+      label: t("headings"),
+      items: [["outline", t("headingOutline")]],
     },
     {
       id: "languages",
@@ -520,6 +559,66 @@ function bindSectionToggles(container) {
           String(collapsed)
         );
       }
+    });
+  });
+}
+
+function renderHeadingsSection(headings = []) {
+  if (!visibleItems.has("headings.outline")) return null;
+
+  const options = getSectionOptions("headings");
+  const items = headings
+    .map((heading) => {
+      const level = Math.min(6, Math.max(1, Number(heading.level) || 1));
+      const text = heading.text || t("untitledHeading");
+      const emptyClass = heading.text ? "" : " is-empty";
+      const indent = (level - 1) * 18;
+      const label = escapeHtml(`${t("jumpToHeading")} H${level}: ${text}`);
+
+      return `<div class="toc-item" data-level="${level}" style="--heading-indent: ${indent}px">
+        <button class="toc-link" type="button" data-heading-index="${
+          heading.index
+        }" aria-label="${label}">
+          <span class="toc-level" aria-hidden="true">H${level}</span>
+          <span class="toc-text${emptyClass}" title="${escapeHtml(text)}">${escapeHtml(
+        text
+      )}</span>
+        </button>
+      </div>`;
+    })
+    .join("");
+
+  return `<div class="section ${
+    options.collapsed ? "collapsed" : ""
+  }" data-section-id="headings">
+    <div class="section-header">
+      <button class="section-toggle" type="button" aria-expanded="${String(
+        !options.collapsed
+      )}">
+        <span class="section-chevron" aria-hidden="true">›</span>
+        <span class="section-title">${t("headings")}</span>
+      </button>
+      <div class="tools">
+        <span class="heading-count" aria-hidden="true">${headings.length}</span>
+      </div>
+    </div>
+    <div class="toc-list">
+      ${items || `<div class="empty-state">${t("noHeadings")}</div>`}
+    </div>
+  </div>`;
+}
+
+function bindHeadingLinks(container, tabId) {
+  container.querySelectorAll("[data-heading-index]").forEach((button) => {
+    button.addEventListener("click", () => {
+      chrome.tabs.sendMessage(
+        tabId,
+        {
+          action: "scrollToHeading",
+          index: Number(button.dataset.headingIndex),
+        },
+        () => void chrome.runtime.lastError
+      );
     });
   });
 }
@@ -844,7 +943,7 @@ function setLoadingState(loading) {
   if (loadingState) loadingState.hidden = !loading;
 }
 
-document.addEventListener("DOMContentLoaded", () => {
+function initializePopup() {
   chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
     const activeTab = tabs[0];
     const groups = document.getElementById("groups");
@@ -1066,6 +1165,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
               [
                 getVisibleSection("basic", t("basic"), basicList),
+                renderHeadingsSection(metadata.headings),
                 getVisibleSection(
                   "languages",
                   t("languages"),
@@ -1163,6 +1263,7 @@ document.addEventListener("DOMContentLoaded", () => {
             groups.innerHTML = sections.join("");
             bindCodeToggles(groups);
             bindSectionToggles(groups);
+            bindHeadingLinks(groups, activeTab.id);
             renderJsonLd({
               jsonldData: data?.jsonldData,
               jsonldErrors: data?.jsonldErrors,
@@ -1172,7 +1273,13 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     );
   });
-});
+}
+
+if (document.readyState === "loading") {
+  document.addEventListener("DOMContentLoaded", initializePopup, { once: true });
+} else {
+  initializePopup();
+}
 
 const languageSelect = document.getElementById("languageSelect");
 if (languageSelect) {
