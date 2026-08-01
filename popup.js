@@ -71,6 +71,7 @@ const messages = {
       "Chrome-protected pages cannot be inspected. Open a regular website and try again.",
     inspectionFailedMessage: "Metadata could not be read from this page.",
     noJsonLd: "No JSON-LD",
+    loadingMetadata: "Loading metadata…",
   },
   ko: {
     reload: "새로고침",
@@ -125,6 +126,7 @@ const messages = {
       "Chrome 보호 페이지는 확장 프로그램에서 검사할 수 없습니다. 일반 웹사이트를 열고 다시 시도하세요.",
     inspectionFailedMessage: "이 페이지에서 메타데이터를 읽지 못했습니다.",
     noJsonLd: "JSON-LD 없음",
+    loadingMetadata: "메타데이터 불러오는 중…",
   },
   ja: {
     reload: "再読み込み",
@@ -179,6 +181,7 @@ const messages = {
       "Chrome の保護ページは拡張機能で検査できません。通常のウェブサイトを開いて再試行してください。",
     inspectionFailedMessage: "このページのメタデータを読み取れませんでした。",
     noJsonLd: "JSON-LD なし",
+    loadingMetadata: "メタデータを読み込み中…",
   },
   es: {
     reload: "Actualizar",
@@ -233,6 +236,7 @@ const messages = {
       "Las páginas protegidas de Chrome no se pueden inspeccionar. Abre un sitio web normal e inténtalo de nuevo.",
     inspectionFailedMessage: "No se pudieron leer los metadatos de esta página.",
     noJsonLd: "Sin JSON-LD",
+    loadingMetadata: "Cargando metadatos…",
   },
   pt_BR: {
     reload: "Atualizar",
@@ -287,6 +291,7 @@ const messages = {
       "As páginas protegidas do Chrome não podem ser inspecionadas. Abra um site comum e tente novamente.",
     inspectionFailedMessage: "Não foi possível ler os metadados desta página.",
     noJsonLd: "Sem JSON-LD",
+    loadingMetadata: "Carregando metadados…",
   },
 };
 
@@ -805,6 +810,40 @@ function renderJsonLd({ jsonldData, jsonldErrors, jsonldTotal }) {
   bindSectionToggles(container);
 }
 
+function requestMetadataFromTab(tabId) {
+  return new Promise((resolve) => {
+    chrome.tabs.sendMessage(
+      tabId,
+      { action: "getCurrentMetadata" },
+      (data) => {
+        const messageError = chrome.runtime.lastError;
+        resolve(messageError ? null : data || null);
+      }
+    );
+  });
+}
+
+async function loadMetadataFromTab(tabId) {
+  const currentData = await requestMetadataFromTab(tabId);
+  if (currentData) return currentData;
+
+  try {
+    await chrome.scripting.executeScript({
+      target: { tabId },
+      files: ["content.js"],
+    });
+  } catch {
+    return null;
+  }
+
+  return requestMetadataFromTab(tabId);
+}
+
+function setLoadingState(loading) {
+  const loadingState = document.getElementById("loadingState");
+  if (loadingState) loadingState.hidden = !loading;
+}
+
 document.addEventListener("DOMContentLoaded", () => {
   chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
     const activeTab = tabs[0];
@@ -818,6 +857,7 @@ document.addEventListener("DOMContentLoaded", () => {
         getSectionOptions("error")
       );
       bindSectionToggles(groups);
+      setLoadingState(false);
       return;
     }
 
@@ -832,11 +872,7 @@ document.addEventListener("DOMContentLoaded", () => {
         const httpInfo = response?.httpInfo;
         const fetchError = response?.error;
 
-        chrome.tabs.sendMessage(
-          activeTab.id,
-          { action: "getCurrentMetadata" },
-          (data) => {
-            void chrome.runtime.lastError;
+        loadMetadataFromTab(activeTab.id).then((data) => {
             const metadata = data?.metadata;
             const sections = [];
             const documentInfo = document.getElementById("documentInfo");
@@ -1132,8 +1168,7 @@ document.addEventListener("DOMContentLoaded", () => {
               jsonldErrors: data?.jsonldErrors,
               jsonldTotal: data?.jsonldTotal,
             });
-          }
-        );
+          }).finally(() => setLoadingState(false));
       }
     );
   });
@@ -1155,6 +1190,9 @@ const stateHelpButton = document.getElementById("stateHelp");
 if (stateHelpButton) stateHelpButton.setAttribute("aria-label", t("stateHelp"));
 initializeStateHelpModal();
 initializeDisplaySettingsModal();
+
+const loadingText = document.getElementById("loadingText");
+if (loadingText) loadingText.textContent = t("loadingMetadata");
 
 const refreshButton = document.getElementById("refreshPage");
 if (refreshButton) refreshButton.textContent = t("reload");

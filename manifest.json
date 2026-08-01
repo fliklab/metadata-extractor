@@ -1,9 +1,10 @@
 {
   "manifest_version": 3,
-  "name": "Meta Checker",
-  "version": "1.1.0",
-  "description": "Inspect webpage metadata and compare the live DOM with the original HTML response. Spot new, changed, or removed values instantly.",
-  "permissions": ["activeTab"],
+  "name": "__MSG_extensionName__",
+  "version": "1.1.1",
+  "description": "__MSG_extensionDescription__",
+  "default_locale": "en",
+  "permissions": ["activeTab", "scripting"],
   "background": {
     "type": "module",
     "service_worker": "background.js"

@@ -1,0 +1,10 @@
+{
+  "extensionName": {
+    "message": "Meta Checker",
+    "description": "拡張機能の名前"
+  },
+  "extensionDescription": {
+    "message": "GEOとSEOのためのメタデータパートナー。現在のDOMと元のHTMLを比較し、追加・変更・削除されたメタデータを確認できます。",
+    "description": "Chrome ウェブストアに表示する短い説明"
+  }
+}

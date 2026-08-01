@@ -149,6 +149,40 @@
         color: var(--muted);
         font-size: 12px;
       }
+      .loading-state {
+        min-height: 112px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        background: var(--card);
+        color: var(--muted);
+        font-size: 12px;
+      }
+      .loading-state[hidden] {
+        display: none;
+      }
+      .loading-spinner {
+        width: 26px;
+        height: 26px;
+        border: 3px solid #2b3242;
+        border-top-color: var(--info);
+        border-radius: 50%;
+        animation: loading-spin 0.8s linear infinite;
+      }
+      @keyframes loading-spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .loading-spinner {
+          animation-duration: 1.6s;
+        }
+      }
       .row {
         display: grid;
         grid-template-columns: 130px 1fr auto;
@@ -423,8 +457,12 @@
         </div>
       </div>
       <div id="activeUrl" class="url"></div>
+      <div id="loadingState" class="loading-state" role="status" aria-live="polite">
+        <span class="loading-spinner" aria-hidden="true"></span>
+        <span id="loadingText">Loading metadata…</span>
+      </div>
       <div id="groups"></div>
-      <div id="jsonld" class="section"></div>
+      <div id="jsonld" class="section" hidden></div>
       <div id="documentInfo"></div>
     </div>
     <div
